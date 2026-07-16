@@ -36,23 +36,23 @@ def print_matrix(name, matrix):
 def main():
     # Three tiny 2D token embeddings.
     input_embeddings = [
-        [1.0, 0.0],
-        [0.0, 1.0],
-        [1.0, 1.0],
+        [1, 0],
+        [0, 1],
+        [1, 1],
     ]
 
     # Small hand-picked projection matrices. In a trained model, these are learned.
     w_q = [
-        [1.0, 0.0],
-        [0.0, 1.0],
+        [1, 0],
+        [0, 1],
     ]
     w_k = [
-        [1.0, 0.0],
-        [0.0, 1.0],
+        [1, 0],
+        [0, 1],
     ]
     w_v = [
-        [0.5, 0.0],
-        [0.0, 2.0],
+        [0, 0],
+        [0, 2],
     ]
 
     q = matmul(input_embeddings, w_q)
