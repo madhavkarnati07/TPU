@@ -2,7 +2,9 @@
 
 module pe #(
     parameter DATA_WIDTH = 8,
-    parameter ACC_WIDTH = 32
+    parameter DOT_PRODUCT_LENGTH = 256,
+    parameter ACC_WIDTH = (2*DATA_WIDTH) + $clog2(DOT_PRODUCT_LENGTH)
+
 ) (
     input wire clk,
     input wire rst,
