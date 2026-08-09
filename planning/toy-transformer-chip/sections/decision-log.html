@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Decision Log</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="section-header">
+    <a href="../index.html">Back to index</a>
+    <h1>Decision Log</h1>
+    <p class="lede">The architecture decisions locked by the implemented and verified chip.</p>
+  </header>
+
+  <main>
+    <section class="band">
+      <h2>Initial Decisions</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Decision</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Planning format</td>
+            <td>Chosen</td>
+            <td>Use HTML index and subsection pages with interactive control-flow diagrams.</td>
+          </tr>
+          <tr>
+            <td>Implementation status</td>
+            <td>Complete</td>
+            <td>Python, RTL, wrapper tests, powered gate simulation, hardening, and precheck pass locally.</td>
+          </tr>
+          <tr>
+            <td>Primary purpose</td>
+            <td>Chosen</td>
+            <td>Educational and fun; favor simple, explainable design over optimization-driven complexity.</td>
+          </tr>
+          <tr>
+            <td>Number format direction</td>
+            <td>Locked</td>
+            <td>Use signed int4 for all loaded operands and projection/final outputs.</td>
+          </tr>
+          <tr>
+            <td>Q/K/V projection location</td>
+            <td>Locked</td>
+            <td>Assume the chip computes Q, K, and V projections from input embeddings and integer projection matrices.</td>
+          </tr>
+          <tr>
+            <td>Toy shape</td>
+            <td>Locked</td>
+            <td>Use sequence length 4, embedding width 2, Q/K/V width 2, and one attention head for Phase 2 sizing.</td>
+          </tr>
+          <tr>
+            <td>Accumulator width</td>
+            <td>Locked</td>
+            <td>Use signed 16-bit accumulators for the first hardware-shaped model; clamp or requantize stage outputs back to int4 where needed.</td>
+          </tr>
+          <tr>
+            <td>High-level architecture target</td>
+            <td>Locked</td>
+            <td>Use two reusable MAC lanes. Both dimensions run together for projection and weighted V; scores serialize through lane 0.</td>
+          </tr>
+          <tr>
+            <td>Attention direction</td>
+            <td>Implemented</td>
+            <td>Run one complete serialized single-head attention pass over four 2D tokens.</td>
+          </tr>
+          <tr>
+            <td>Softmax direction</td>
+            <td>Locked</td>
+            <td>Use clipped-linear attention for the first hardware-shaped model: B = 4, u_i = max(0, B + score_i - max_score), then normalize weighted V with a Q0.8 reciprocal LUT and round-to-nearest.</td>
+          </tr>
+          <tr>
+            <td>Int4 clamp behavior</td>
+            <td>Locked</td>
+            <td>Use saturating clamp to signed int4 range [-8, 7] after projection requantization and final normalization. Do not wrap.</td>
+          </tr>
+          <tr>
+            <td>Debug readback</td>
+            <td>Implemented</td>
+            <td>Keep <code>READ_DEBUG</code> as an observability command so the host can drain intermediate values and compare them with the Python model.</td>
+          </tr>
+          <tr>
+            <td>Design sequencing</td>
+            <td>Chosen</td>
+            <td>Validate the MAC primitive, then verify the complete attention transaction at source RTL and powered gate level.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Closed Numeric And Protocol Decisions</h2>
+      <ol>
+        <li>Signed Q0.8 products round to nearest with ties away from zero.</li>
+        <li><code>READ_DEBUG</code> selectors <code>0x00</code> through <code>0x08</code> cover status and retained intermediate values.</li>
+        <li>The FSM serializes load, projection, score, max, clip, weighted V, normalization, debug, and TX phases.</li>
+        <li>The demonstration combines exact numeric traces, simulation checks, and browser animation.</li>
+      </ol>
+    </section>
+
+    <section class="band">
+      <h2>Implementation References</h2>
+      <ul>
+        <li><a href="../../../TPU/docs/toy_attention_spec.md">Exact arithmetic and byte specification</a></li>
+        <li><a href="e2e-walkthrough.html">Interactive end-to-end walkthrough</a></li>
+        <li><a href="../../../TPU/docs/tapeout_verification.md">Tapeout verification evidence</a></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

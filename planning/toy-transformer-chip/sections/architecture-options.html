@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Architecture Options</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="section-header">
+    <a href="../index.html">Back to index</a>
+    <h1>Architecture Options</h1>
+    <p class="lede">Candidate chip scopes, from safest to most transformer-like.</p>
+  </header>
+
+  <main>
+    <section class="band">
+      <h2>Option A: Single MAC Engine</h2>
+      <p>
+        A tiny multiply-accumulate datapath receives signed bytes, accumulates a dot product,
+        and returns the result. The host sequences every higher-level operation.
+      </p>
+      <ul>
+        <li>Lowest risk and easiest to explain.</li>
+        <li>Directly maps to dot products in matmul and attention.</li>
+        <li>Less visually exciting than a systolic array.</li>
+      </ul>
+    </section>
+
+    <section class="band">
+      <h2>Option B: 2x2 Matrix-Multiply Tile</h2>
+      <p>
+        A small systolic or scheduled MAC array computes one 2x2 matrix product tile. Larger
+        products are decomposed and streamed by the host.
+      </p>
+      <ul>
+        <li>Closest to the existing TinyTapeout TPU reference.</li>
+        <li>Good educational bridge from matrix multiplication to attention.</li>
+        <li>Still small enough to keep understandable.</li>
+      </ul>
+    </section>
+
+    <section class="band">
+      <h2>Option C: Serialized Toy Attention Core</h2>
+      <p>
+        A tiny controller runs a fixed demonstration of Q/K/V dot products and value accumulation,
+        using host-streamed operands and minimal on-chip state. The selected number format is int4
+        if it helps fit a larger educational example.
+      </p>
+      <ul>
+        <li>Most aligned with the transformer story.</li>
+        <li>Requires the most careful protocol and state-machine design.</li>
+        <li>Softmax should be simplified, approximated, or handled partly by the host.</li>
+        <li>Only remains a candidate if Tiny Tapeout feasibility checks look reasonable.</li>
+      </ul>
+    </section>
+
+    <section class="band">
+      <h2>Selected Architecture</h2>
+      <p>
+        This page is now a background appendix. The active Phase 2 target is the
+        <a href="high-level-architecture.html">High-Level Chip Architecture</a>: two reusable
+        MAC lanes in a fixed int4 single-head toy attention core. Both lanes compute projection
+        and weighted-V dimensions together; score dot products serialize through lane 0. The
+        hardened implementation confirms that this option fits a Tiny Tapeout 2x2 tile.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

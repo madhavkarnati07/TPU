@@ -1,0 +1,44 @@
+# Tiny Tapeout project information
+project:
+  title: "Toy Attention TPU"
+  author: "Madhav Karnati"
+  discord: ""
+  description: "A fixed-shape signed-int4 single-head attention accelerator"
+  language: "Verilog"
+  clock_hz: 10000000
+  tiles: "2x2"
+  top_module: "tt_um_madhavkarnati_toy_tpu"
+  source_files:
+    - "dual_int4_mac.v"
+    - "toy_attention_core.v"
+    - "project.v"
+
+pinout:
+  ui[0]: "host byte bit 0"
+  ui[1]: "host byte bit 1"
+  ui[2]: "host byte bit 2"
+  ui[3]: "host byte bit 3"
+  ui[4]: "host byte bit 4"
+  ui[5]: "host byte bit 5"
+  ui[6]: "host byte bit 6"
+  ui[7]: "host byte bit 7"
+
+  uo[0]: "response byte bit 0"
+  uo[1]: "response byte bit 1"
+  uo[2]: "response byte bit 2"
+  uo[3]: "response byte bit 3"
+  uo[4]: "response byte bit 4"
+  uo[5]: "response byte bit 5"
+  uo[6]: "response byte bit 6"
+  uo[7]: "response byte bit 7"
+
+  uio[0]: "rx_valid input"
+  uio[1]: "tx_ready input"
+  uio[2]: ""
+  uio[3]: ""
+  uio[4]: "rx_ready output"
+  uio[5]: "tx_valid output"
+  uio[6]: "busy output"
+  uio[7]: "done output"
+
+yaml_version: 6

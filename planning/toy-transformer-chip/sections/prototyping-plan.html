@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prototyping Plan</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="section-header">
+    <a href="../index.html">Back to index</a>
+    <h1>Prototyping Plan</h1>
+    <p class="lede">Lower-level verification details under the top-down design roadmap.</p>
+  </header>
+
+  <main>
+    <section class="band">
+      <h2>Stage 1: Python/Numpy Golden Model</h2>
+      <p>
+        Define the exact toy computation in Python first. This should include signed integer
+        behavior, saturation or wrap rules, input ordering, and expected output bytes.
+      </p>
+    </section>
+
+    <section class="band">
+      <h2>Stage 2: RTL Design Review</h2>
+      <p>
+        Before simulation, review the planned Verilog module boundaries, FSM, byte protocol,
+        accumulator behavior, and reset behavior. This stage is still design review, not coding.
+      </p>
+    </section>
+
+    <section class="band">
+      <h2>Stage 3: RTL Simulation</h2>
+      <p>
+        Use cocotb with Icarus Verilog as the first practical simulator loop. Tests should drive
+        the same byte protocol that a Tiny Tapeout demo board or host script would drive.
+      </p>
+    </section>
+
+    <section class="band">
+      <h2>Stage 4: Waveform Review</h2>
+      <p>
+        Use GTKWave or Surfer to inspect reset, load, compute, output valid, accumulator state,
+        and protocol timing. This is an educational deliverable, not just a debug aid.
+      </p>
+    </section>
+
+    <section class="band">
+      <h2>Stage 5: Tiny Tapeout Flow</h2>
+      <p>
+        Once the design is stable, move into a Tiny Tapeout template, harden the design, run
+        gate-level simulation, and prepare the submission package.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
