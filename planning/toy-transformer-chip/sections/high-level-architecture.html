@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>High-Level Chip Architecture</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="section-header">
+    <a href="../index.html">Back to index</a>
+    <h1>High-Level Chip Architecture</h1>
+    <p class="lede">Implemented specification for the fixed-shape toy-attention chip.</p>
+  </header>
+
+  <main>
+    <section class="band">
+      <h2>Specification</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th>Decision</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Demo target</td>
+            <td>One serialized single-head attention pass.</td>
+          </tr>
+          <tr>
+            <td>Toy shape</td>
+            <td><code>N = 4</code> tokens, <code>D_IN = 2</code>, <code>D_QKV = 2</code>, one head.</td>
+          </tr>
+          <tr>
+            <td>Arithmetic</td>
+            <td>Signed int4 operands, two packed per byte; signed 16-bit accumulators.</td>
+          </tr>
+          <tr>
+            <td>Q/K/V</td>
+            <td>The chip computes Q, K, and V projections from loaded <code>X</code>, <code>Wq</code>, <code>Wk</code>, and <code>Wv</code>.</td>
+          </tr>
+          <tr>
+            <td>Scores</td>
+            <td>Use raw integer <code>QK^T</code> scores in the first hardware contract.</td>
+          </tr>
+          <tr>
+            <td>Softmax substitute</td>
+            <td>Clipped-linear weights with <code>B = 4</code>, then <code>Q0.8</code> reciprocal-LUT normalization.</td>
+          </tr>
+          <tr>
+            <td>Core primitive</td>
+            <td>Two reusable signed-int4 MAC lanes with signed-int16 accumulators.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Block Diagram</h2>
+      <p>
+        The block diagram is the data path story. Each block below now maps to logic in
+        <code>project.v</code>, <code>toy_attention_core.v</code>, or <code>dual_int4_mac.v</code>.
+      </p>
+      <div class="architecture-flow" aria-label="High-level chip block diagram">
+        <div class="flow-node accent">Host byte stream</div>
+        <div class="flow-arrow">-&gt;</div>
+        <div class="flow-node">Command FSM</div>
+        <div class="flow-arrow">-&gt;</div>
+        <div class="flow-node">Operand registers</div>
+        <div class="flow-arrow">-&gt;</div>
+        <div class="flow-node">Int4 unpack</div>
+        <div class="flow-arrow">-&gt;</div>
+        <div class="flow-node accent">Two MAC lanes + int16 sums</div>
+        <div class="flow-arrow">-&gt;</div>
+        <div class="flow-node">Clamp / pack</div>
+        <div class="flow-arrow">-&gt;</div>
+        <div class="flow-node">Output byte stream</div>
+      </div>
+      <div class="architecture-flow secondary" aria-label="Attention normalization block diagram">
+        <div class="flow-node">Score row</div>
+        <div class="flow-arrow">-&gt;</div>
+        <div class="flow-node">Row max</div>
+        <div class="flow-arrow">-&gt;</div>
+        <div class="flow-node"><code>u = max(0, 4 + score - max)</code></div>
+        <div class="flow-arrow">-&gt;</div>
+        <div class="flow-node">Weighted V sum</div>
+        <div class="flow-arrow">-&gt;</div>
+        <div class="flow-node accent">Reciprocal LUT</div>
+        <div class="flow-arrow">-&gt;</div>
+        <div class="flow-node">Final int4 output</div>
+      </div>
+    </section>
+
+    <section class="band">
+      <h2>Reading The Diagram</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Block</th>
+            <th>Meaning</th>
+            <th>RTL realization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Host byte stream</td>
+            <td>The outside controller sends one byte at a time into the chip: commands, packed int4 operands, and debug selectors.</td>
+            <td><code>ui_in</code> plus <code>uio_in[0]</code> valid and <code>uio_out[4]</code> ready.</td>
+          </tr>
+          <tr>
+            <td>Command FSM</td>
+            <td>The chip's control brain. It decides whether the current byte is a command or payload, counts bytes, starts compute, and starts drain.</td>
+            <td>A Verilog <code>case</code> over ten states from <code>COMMAND</code> through <code>TX</code>.</td>
+          </tr>
+          <tr>
+            <td>Operand registers</td>
+            <td>Tiny on-chip storage for the values the chip needs while computing: <code>X</code>, weights, Q/K/V, one score row, and results.</td>
+            <td>Small register arrays, not a large SRAM.</td>
+          </tr>
+          <tr>
+            <td>Int4 unpack</td>
+            <td>Each input byte carries two signed int4 numbers. This block splits the byte into two nibbles and sign-extends them before math.</td>
+            <td>Combinational wires/helpers around the MAC inputs.</td>
+          </tr>
+          <tr>
+            <td>MAC + int16 accumulator</td>
+            <td>Two lanes each multiply signed int4 values and add into a signed 16-bit sum.</td>
+            <td>Both lanes run in parallel for Q/K/V and weighted V; lane 0 handles serialized scores.</td>
+          </tr>
+          <tr>
+            <td>Clamp / pack</td>
+            <td>Convert wider results back to signed int4 using saturation, then pack two int4 values into one output byte.</td>
+            <td>Small saturation and packing logic.</td>
+          </tr>
+          <tr>
+            <td>Output byte stream</td>
+            <td>The chip returns result or debug bytes to the host one byte at a time.</td>
+            <td>Output mux plus valid/done signaling.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Execution Steps</h2>
+      <p>
+        This section is the algorithm contract for the chip. The specification says what the
+        design is; these steps say what the chip must do in order before we assign clocks and RTL states.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Stage</th>
+            <th>Chip Work</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Load</td>
+            <td>Accept packed int4 bytes for <code>X</code>, <code>Wq</code>, <code>Wk</code>, and <code>Wv</code>.</td>
+            <td>Small operand registers are ready.</td>
+          </tr>
+          <tr>
+            <td>Project Q/K/V</td>
+            <td>For each token and output dimension, run a 2-wide int4 dot product.</td>
+            <td><code>Q</code>, <code>K</code>, and <code>V</code> are stored as int4 matrices.</td>
+          </tr>
+          <tr>
+            <td>Score row</td>
+            <td>For one query token, dot its <code>Q</code> vector with all four <code>K</code> vectors.</td>
+            <td>Four signed 16-bit scores for one attention row.</td>
+          </tr>
+          <tr>
+            <td>Clip weights</td>
+            <td>Find row max, then compute <code>u_j = max(0, 4 + score_j - max_score)</code>.</td>
+            <td>Four small weights in range <code>0..4</code>.</td>
+          </tr>
+          <tr>
+            <td>Weighted V</td>
+            <td>Accumulate <code>sum(u_j * V_j)</code> for each output dimension and <code>sum_u</code> for the row.</td>
+            <td>Two numerators plus one denominator.</td>
+          </tr>
+          <tr>
+            <td>Normalize</td>
+            <td>Read <code>Q0.8 reciprocal[sum_u]</code>, multiply, round-to-nearest, shift, and saturate to int4.</td>
+            <td>One output token vector.</td>
+          </tr>
+          <tr>
+            <td>Drain</td>
+            <td>Pack final int4 outputs into bytes; optionally drain debug values in a separate mode.</td>
+            <td>Host receives the final toy attention result.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>State Budget</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Object</th>
+            <th>Implemented size</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>X</code></td>
+            <td><code>4 x 2</code> int4 = 4 bytes</td>
+            <td>Input token embeddings.</td>
+          </tr>
+          <tr>
+            <td><code>Wq</code>, <code>Wk</code>, <code>Wv</code></td>
+            <td><code>3 x 2 x 2</code> int4 = 6 bytes</td>
+            <td>Projection weights loaded by host.</td>
+          </tr>
+          <tr>
+            <td><code>Q</code>, <code>K</code>, <code>V</code></td>
+            <td><code>3 x 4 x 2</code> int4 = 12 bytes</td>
+            <td>Stored after projection so attention can run without host round trips.</td>
+          </tr>
+          <tr>
+            <td>Score row</td>
+            <td><code>4</code> signed int16 = 8 bytes</td>
+            <td>Only one row is needed at a time.</td>
+          </tr>
+          <tr>
+            <td>Weight row</td>
+            <td><code>4</code> values in <code>0..4</code></td>
+            <td>Can be held as nibbles or tiny registers.</td>
+          </tr>
+          <tr>
+            <td>Accumulators</td>
+            <td>Two signed-int16 MAC sums, two signed-int16 numerator registers, and a 5-bit denominator</td>
+            <td>The same two MAC sums are reused across phases.</td>
+          </tr>
+          <tr>
+            <td>Result</td>
+            <td><code>4 x 2</code> int4 = 4 bytes</td>
+            <td>Stored before the host issues <code>READ_RESULT</code>.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="tight-note">
+        The packed operands, projections, row scratch, numerators, results, and MAC sums account for
+        about 42 bytes of logical data state. The hardened core contains 446 flip-flops after adding
+        the FSM, counters, handshake state, and synthesis realization.
+      </p>
+    </section>
+
+    <section class="band">
+      <h2>Byte Protocol</h2>
+      <p>
+        A transfer occurs on a rising edge when valid and ready are both high. The RTL holds an
+        output byte stable while <code>tx_valid=1</code> and <code>tx_ready=0</code>.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Command</th>
+            <th>Payload</th>
+            <th>Effect</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>LOAD_X (0x10)</code></td>
+            <td>4 packed bytes</td>
+            <td>Load the <code>4 x 2</code> input embedding matrix.</td>
+          </tr>
+          <tr>
+            <td><code>LOAD_WQ (0x11)</code></td>
+            <td>2 packed bytes</td>
+            <td>Load the <code>2 x 2</code> Q projection matrix.</td>
+          </tr>
+          <tr>
+            <td><code>LOAD_WK (0x12)</code></td>
+            <td>2 packed bytes</td>
+            <td>Load the <code>2 x 2</code> K projection matrix.</td>
+          </tr>
+          <tr>
+            <td><code>LOAD_WV (0x13)</code></td>
+            <td>2 packed bytes</td>
+            <td>Load the <code>2 x 2</code> V projection matrix.</td>
+          </tr>
+          <tr>
+            <td><code>RUN_ATTENTION (0x20)</code></td>
+            <td>None</td>
+            <td>Compute Q/K/V and all four output token vectors.</td>
+          </tr>
+          <tr>
+            <td><code>READ_RESULT (0x30)</code></td>
+            <td>None</td>
+            <td>Drain 4 packed result bytes.</td>
+          </tr>
+          <tr>
+            <td><code>READ_DEBUG (0x31)</code></td>
+            <td>Debug selector</td>
+            <td>Required observability path: drain Q/K/V, score rows, clipped weights, <code>sum_u</code>, or intermediate accumulators for learning and test comparison.</td>
+          </tr>
+          <tr>
+            <td><code>FLUSH (0xff)</code></td>
+            <td>None</td>
+            <td>Return to command mode, clear status, and invalidate all loaded operands.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Tiny Tapeout Pins</h2>
+      <table>
+        <thead>
+          <tr><th>Pins</th><th>Direction</th><th>Use</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>ui_in[7:0]</code></td><td>Host to chip</td><td>Command or payload byte.</td></tr>
+          <tr><td><code>uo_out[7:0]</code></td><td>Chip to host</td><td>Result or debug response byte.</td></tr>
+          <tr><td><code>uio[0]</code></td><td>Input</td><td><code>rx_valid</code>.</td></tr>
+          <tr><td><code>uio[1]</code></td><td>Input</td><td><code>tx_ready</code>.</td></tr>
+          <tr><td><code>uio[4]</code></td><td>Output</td><td><code>rx_ready</code>.</td></tr>
+          <tr><td><code>uio[5]</code></td><td>Output</td><td><code>tx_valid</code>.</td></tr>
+          <tr><td><code>uio[6]</code></td><td>Output</td><td><code>busy</code>.</td></tr>
+          <tr><td><code>uio[7]</code></td><td>Output</td><td><code>done</code>.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Controller States</h2>
+      <p>
+        Controller states are needed because hardware runs one clock at a time. The chip must
+        remember whether it is loading bytes, computing a dot product, normalizing attention,
+        draining output, or serving a debug read. That memory is the finite-state machine.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>State</th>
+            <th>Purpose</th>
+            <th>Exit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>COMMAND</code></td>
+            <td>Wait for command byte.</td>
+            <td>Valid command arrives.</td>
+          </tr>
+          <tr>
+            <td><code>LOAD</code></td>
+            <td>Count payload bytes and fill the selected register region.</td>
+            <td>Expected byte count received.</td>
+          </tr>
+          <tr>
+            <td><code>PROJECT</code></td>
+            <td>Use both MAC lanes for all Q/K/V dot products.</td>
+            <td>All projection entries computed and clamped.</td>
+          </tr>
+          <tr>
+            <td><code>SCORE</code></td>
+            <td>Use MAC lane 0 to compute four <code>QK^T</code> scores for the current query token.</td>
+            <td>Four row scores are available.</td>
+          </tr>
+          <tr>
+            <td><code>MAX</code></td>
+            <td>Scan the four score registers for the row maximum.</td>
+            <td>The maximum is stored.</td>
+          </tr>
+          <tr>
+            <td><code>CLIP</code></td>
+            <td>Derive clipped-linear weights and accumulate their denominator.</td>
+            <td><code>u</code> row and <code>sum_u</code> are available.</td>
+          </tr>
+          <tr>
+            <td><code>WEIGHT</code></td>
+            <td>Use both MAC lanes to accumulate weighted V numerators.</td>
+            <td>Both output dimensions have numerators.</td>
+          </tr>
+          <tr>
+            <td><code>NORM</code></td>
+            <td>Apply <code>Q0.8</code> reciprocal LUT, round-to-nearest, and int4 saturation.</td>
+            <td>Current output token is stored.</td>
+          </tr>
+          <tr>
+            <td><code>DEBUG</code></td>
+            <td>Accept and validate one debug selector.</td>
+            <td>A response kind and length are selected, or protocol error is set.</td>
+          </tr>
+          <tr>
+            <td><code>TX</code></td>
+            <td>Emit result or debug bytes with ready/valid backpressure.</td>
+            <td>Requested bytes have been emitted.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Numeric Rules</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rule</th>
+            <th>Decision</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Reciprocal LUT</td>
+            <td><code>Q0.8</code></td>
+            <td>Store <code>round(256 / sum_u)</code> for valid denominators.</td>
+          </tr>
+          <tr>
+            <td>Normalization rounding</td>
+            <td>Round-to-nearest, ties away from zero, before the final shift.</td>
+            <td>Python and RTL use the same signed rule for positive and negative products.</td>
+          </tr>
+          <tr>
+            <td>Int4 clamp</td>
+            <td>Saturate to signed int4 range <code>[-8, 7]</code>.</td>
+            <td>Values above <code>7</code> become <code>7</code>; values below <code>-8</code> become <code>-8</code>. Do not wrap.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Debug Readback</h2>
+      <p>
+        <code>READ_DEBUG</code> stays in the architecture. It is not needed for the chip to compute
+        the final answer, but it makes the chip inspectable: the host can ask for intermediate
+        values and compare them against the Python model without relying only on waveforms.
+      </p>
+      <ul>
+        <li>Useful during simulation: compare Q/K/V, score rows, clipped weights, <code>sum_u</code>, and numerators.</li>
+        <li>Useful for demos: show the attention computation step by step from a real chip.</li>
+        <li>Implemented as selectors <code>0x00</code> through <code>0x08</code> and verified at RTL and gate level.</li>
+      </ul>
+    </section>
+
+    <section class="band">
+      <h2>Cycle-Level Schedule Animation</h2>
+      <p>
+        This phase-level animation shows the implemented control flow. It compresses repeated
+        clock cycles but preserves the actual command, storage, projection, attention, and TX order.
+      </p>
+      <div class="cycle-animation" data-cycle-animation>
+        <div class="cycle-topline">
+          <div>
+            <p class="mini-label">Cycle view</p>
+            <h3 data-cycle-title>Load X command</h3>
+            <p data-cycle-description>Host presents the command byte that tells the FSM the next payload belongs to X.</p>
+          </div>
+          <div class="cycle-counter" aria-live="polite">
+            Step <span data-cycle-current>1</span> / <span data-cycle-total>10</span>
+          </div>
+        </div>
+
+        <div class="cycle-controls" aria-label="Cycle animation controls">
+          <button type="button" data-cycle-action="prev">Prev</button>
+          <button type="button" data-cycle-action="play">Play</button>
+          <button type="button" data-cycle-action="next">Next</button>
+          <button type="button" data-cycle-action="reset">Reset</button>
+        </div>
+
+        <div class="cycle-lane" aria-label="Schedule steps">
+          <button type="button" data-cycle-step="0">0 Load X</button>
+          <button type="button" data-cycle-step="1">1 X bytes</button>
+          <button type="button" data-cycle-step="2">2 Weights</button>
+          <button type="button" data-cycle-step="3">3 Project QKV</button>
+          <button type="button" data-cycle-step="4">4 Store QKV</button>
+          <button type="button" data-cycle-step="5">5 Score row</button>
+          <button type="button" data-cycle-step="6">6 Clip row</button>
+          <button type="button" data-cycle-step="7">7 Weighted V</button>
+          <button type="button" data-cycle-step="8">8 Normalize</button>
+          <button type="button" data-cycle-step="9">9 Drain</button>
+        </div>
+
+        <div class="cycle-stage-grid" aria-label="Datapath blocks">
+          <div class="cycle-block" data-cycle-block="host">
+            <span>Host byte stream</span>
+            <strong>Commands and payloads</strong>
+            <small>Input side</small>
+          </div>
+          <div class="cycle-block" data-cycle-block="fsm">
+            <span>Command FSM</span>
+            <strong>Decode and sequence</strong>
+            <small>Control side</small>
+          </div>
+          <div class="cycle-block" data-cycle-block="registers">
+            <span>Operand registers</span>
+            <strong>X, W, Q/K/V, scores</strong>
+            <small>Small state</small>
+          </div>
+          <div class="cycle-block" data-cycle-block="unpack">
+            <span>Int4 unpack</span>
+            <strong>Nibbles to signed values</strong>
+            <small>Input format</small>
+          </div>
+          <div class="cycle-block" data-cycle-block="mac">
+            <span>Two MACs + int16</span>
+            <strong>Parallel dimensions</strong>
+            <small>Math core</small>
+          </div>
+          <div class="cycle-block" data-cycle-block="normalize">
+            <span>Clamp / LUT</span>
+            <strong>Q0.8 and saturation</strong>
+            <small>Output format</small>
+          </div>
+          <div class="cycle-block" data-cycle-block="output">
+            <span>Output byte stream</span>
+            <strong>Result and debug bytes</strong>
+            <small>Drain side</small>
+          </div>
+        </div>
+
+        <div class="cycle-details">
+          <section>
+            <h3>Active Operation</h3>
+            <p data-cycle-operation>Decode LOAD_X and move from COMMAND to LOAD.</p>
+          </section>
+          <section>
+            <h3>Visible Values</h3>
+            <p data-cycle-values>command = LOAD_X, target = X, byte_count = 0</p>
+          </section>
+          <section>
+            <h3>Why It Matters</h3>
+            <p data-cycle-note>The FSM must know where the next bytes should be stored.</p>
+          </section>
+        </div>
+      </div>
+      <p class="tight-note">
+        Q/K/V and weighted V use both lanes. Score rows use lane 0 because the compact Q/K storage
+        exposes one score operand pair at a time.
+      </p>
+    </section>
+
+    <section class="band">
+      <h2>Implementation Status</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Level</th>
+            <th>Evidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Model and source RTL</td>
+            <td>18 Python tests and two full Icarus transactions pass, including every debug response class.</td>
+          </tr>
+          <tr>
+            <td>Tiny Tapeout wrapper</td>
+            <td>Cocotb transaction, protocol guards, backpressure, and <code>FLUSH</code> pass at RTL and powered gate level.</td>
+          </tr>
+          <tr>
+            <td>Physical 2x2 macro</td>
+            <td>65.043% utilization, 70.189609 ns setup slack at 10 MHz, zero setup/hold violations, signoff checks pass, and Tiny Tapeout precheck passes.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+  <script>
+    (function () {
+      var root = document.querySelector("[data-cycle-animation]");
+      if (!root) {
+        return;
+      }
+
+      var steps = [
+        {
+          title: "Load X command",
+          description: "Host presents the command byte that tells the FSM the next payload belongs to X.",
+          active: ["host", "fsm"],
+          operation: "Decode LOAD_X and move from COMMAND to LOAD.",
+          values: "command = LOAD_X, target = X, byte_count = 0",
+          note: "The FSM must know where the next bytes should be stored."
+        },
+        {
+          title: "Load X payload",
+          description: "Four packed bytes fill the 4 x 2 input embedding register region.",
+          active: ["host", "fsm", "registers"],
+          operation: "Write incoming payload bytes into X registers.",
+          values: "X receives 4 bytes, two int4 values per byte.",
+          note: "The chip now has the token embeddings needed for projection."
+        },
+        {
+          title: "Load projection weights",
+          description: "The host loads Wq, Wk, and Wv as packed int4 matrices.",
+          active: ["host", "fsm", "registers"],
+          operation: "Write Wq, Wk, and Wv register regions.",
+          values: "Wq = 2 bytes, Wk = 2 bytes, Wv = 2 bytes.",
+          note: "Projection weights stay on-chip while Q/K/V are computed."
+        },
+        {
+          title: "Run Q/K/V projection",
+          description: "The controller reuses two MAC lanes for every 2-wide projection.",
+          active: ["fsm", "registers", "unpack", "mac"],
+          operation: "Read packed X and W operands, sign-extend nibbles, and accumulate both output dimensions.",
+          values: "sum0 builds dimension 0 while sum1 builds dimension 1, repeated for Q, K, and V.",
+          note: "This is the matrix multiplication part of the toy transformer."
+        },
+        {
+          title: "Store projected Q/K/V",
+          description: "Projection accumulators are clamped back to int4 and stored for attention.",
+          active: ["fsm", "registers", "mac", "normalize"],
+          operation: "Saturate each projection result to [-8, 7] and write Q/K/V.",
+          values: "Q, K, V each become 4 x 2 int4 matrices.",
+          note: "Attention can now run without the host sending Q/K/V back in."
+        },
+        {
+          title: "Compute score row",
+          description: "For one query token, MAC lane 0 computes dot products against all K vectors.",
+          active: ["fsm", "registers", "unpack", "mac"],
+          operation: "Compute score[j] = dot(Q[row], K[j]) for j = 0..3.",
+          values: "score row = four signed int16 values.",
+          note: "This is QK^T for one attention row."
+        },
+        {
+          title: "Clip attention weights",
+          description: "The chip finds the row max and builds clipped-linear weights with B = 4.",
+          active: ["fsm", "registers", "normalize"],
+          operation: "u[j] = max(0, 4 + score[j] - max_score); sum_u = sum(u).",
+          values: "u values are in 0..4, sum_u is the reciprocal-LUT address.",
+          note: "This replaces exact softmax with hardware-friendly arithmetic."
+        },
+        {
+          title: "Accumulate weighted V",
+          description: "Two MAC lanes accumulate both weighted-value dimensions together.",
+          active: ["fsm", "registers", "mac"],
+          operation: "numerator[d] = sum(u[j] * V[j][d]) for d = 0..1.",
+          values: "two signed int16 numerators plus sum_u.",
+          note: "This creates the attention-weighted mixture of value vectors."
+        },
+        {
+          title: "Normalize and clamp",
+          description: "The reciprocal LUT approximates division by sum_u, then the result saturates to int4.",
+          active: ["fsm", "registers", "normalize"],
+          operation: "output[d] = round(numerator[d] * reciprocal[sum_u] / 256), saturated to int4.",
+          values: "reciprocal format = Q0.8, clamp range = [-8, 7].",
+          note: "This keeps the output format small and deterministic."
+        },
+        {
+          title: "Drain result and debug bytes",
+          description: "The output path emits packed results or selected intermediate values through READ_DEBUG.",
+          active: ["host", "fsm", "registers", "output"],
+          operation: "READ_RESULT drains final bytes; READ_DEBUG drains selected internal values.",
+          values: "output bus shows one byte at a time.",
+          note: "This is how the host sees the final answer and how we teach/debug the chip."
+        }
+      ];
+
+      var index = 0;
+      var timer = null;
+      var title = root.querySelector("[data-cycle-title]");
+      var description = root.querySelector("[data-cycle-description]");
+      var current = root.querySelector("[data-cycle-current]");
+      var total = root.querySelector("[data-cycle-total]");
+      var operation = root.querySelector("[data-cycle-operation]");
+      var values = root.querySelector("[data-cycle-values]");
+      var note = root.querySelector("[data-cycle-note]");
+      var playButton = root.querySelector("[data-cycle-action='play']");
+      var blocks = Array.prototype.slice.call(root.querySelectorAll("[data-cycle-block]"));
+      var stepButtons = Array.prototype.slice.call(root.querySelectorAll("[data-cycle-step]"));
+
+      total.textContent = String(steps.length);
+
+      function render(nextIndex) {
+        index = (nextIndex + steps.length) % steps.length;
+        var step = steps[index];
+        title.textContent = step.title;
+        description.textContent = step.description;
+        current.textContent = String(index + 1);
+        operation.textContent = step.operation;
+        values.textContent = step.values;
+        note.textContent = step.note;
+
+        blocks.forEach(function (block) {
+          var isActive = step.active.indexOf(block.getAttribute("data-cycle-block")) !== -1;
+          block.classList.toggle("is-active", isActive);
+        });
+
+        stepButtons.forEach(function (button) {
+          var isActive = Number(button.getAttribute("data-cycle-step")) === index;
+          button.classList.toggle("is-active", isActive);
+          button.setAttribute("aria-pressed", isActive ? "true" : "false");
+        });
+      }
+
+      function stop() {
+        if (timer) {
+          window.clearInterval(timer);
+          timer = null;
+        }
+        playButton.textContent = "Play";
+      }
+
+      function play() {
+        if (timer) {
+          stop();
+          return;
+        }
+        playButton.textContent = "Pause";
+        timer = window.setInterval(function () {
+          render(index + 1);
+        }, 1500);
+      }
+
+      root.addEventListener("click", function (event) {
+        var actionButton = event.target.closest("[data-cycle-action]");
+        var stepButton = event.target.closest("[data-cycle-step]");
+
+        if (actionButton) {
+          var action = actionButton.getAttribute("data-cycle-action");
+          if (action === "prev") {
+            stop();
+            render(index - 1);
+          } else if (action === "next") {
+            stop();
+            render(index + 1);
+          } else if (action === "reset") {
+            stop();
+            render(0);
+          } else if (action === "play") {
+            play();
+          }
+        }
+
+        if (stepButton) {
+          stop();
+          render(Number(stepButton.getAttribute("data-cycle-step")));
+        }
+      });
+
+      render(0);
+    }());
+  </script>
+</body>
+</html>

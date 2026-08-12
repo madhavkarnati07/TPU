@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Toy Transformer Chip</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <p class="eyebrow">Design and verification workspace</p>
+    <h1>Toy Transformer Chip</h1>
+    <p class="lede">
+      An educational Tiny Tapeout ASIC that computes a complete fixed-shape, serialized
+      self-attention operation with signed-int4 arithmetic.
+    </p>
+  </header>
+
+  <main>
+    <section class="band">
+      <h2>Current System</h2>
+      <p>
+        The goal is to understand and physically realize a playful, inspectable chip that performs
+        the core arithmetic behind a transformer in a very small, serialized form. The first complete
+        version now works from the Python model through RTL, gate-level simulation, and 2x2 hardening.
+      </p>
+      <ul>
+        <li>Four 2D tokens, one attention head, and host-loaded Q/K/V projection weights.</li>
+        <li>Two reusable signed-int4 MAC lanes with signed-int16 accumulation.</li>
+        <li>Clipped-linear attention and a Q0.8 reciprocal LUT instead of exponential softmax.</li>
+        <li>Verified Tiny Tapeout byte protocol, 2x2 physical fit, and passing precheck.</li>
+      </ul>
+    </section>
+
+    <section class="band">
+      <h2>Core Project Pages</h2>
+      <nav class="card-grid" aria-label="Planning sections">
+        <a class="card" href="sections/design-roadmap.html">
+          <span class="card-label">01</span>
+          <strong>Design Roadmap</strong>
+          <span>Timeline, phase deliverables, success criteria, and decisions unlocked at each phase.</span>
+        </a>
+        <a class="card" href="sections/high-level-architecture.html">
+          <span class="card-label">02</span>
+          <strong>High-Level Architecture</strong>
+          <span>Implemented shape, datapath, state budget, protocol, FSM, pins, and physical status.</span>
+        </a>
+        <a class="card" href="sections/e2e-walkthrough.html">
+          <span class="card-label">03</span>
+          <strong>End-to-End Walkthrough</strong>
+          <span>Interactive phase animation, pseudocode, source map, verification path, and submission status.</span>
+        </a>
+        <a class="card" href="sections/requirements.html">
+          <span class="card-label">04</span>
+          <strong>Requirements And Scope</strong>
+          <span>What the chip must demonstrate, what it can ignore, and what counts as success.</span>
+        </a>
+        <a class="card" href="sections/decision-log.html">
+          <span class="card-label">05</span>
+          <strong>Decision Log</strong>
+          <span>Historical choices and the decisions locked by the implemented design.</span>
+        </a>
+      </nav>
+    </section>
+
+    <section class="band">
+      <h2>Appendix Pages</h2>
+      <nav class="card-grid" aria-label="Appendix pages">
+        <a class="card" href="sections/architecture-options.html">
+          <span class="card-label">A</span>
+          <strong>Architecture Candidates</strong>
+          <span>Parking lot for MAC, dot-product, matmul, and serialized attention tradeoffs.</span>
+        </a>
+        <a class="card" href="sections/prototyping-plan.html">
+          <span class="card-label">B</span>
+          <strong>Verification Details</strong>
+          <span>Simulator, waveform, gate-level, and local verification details under the roadmap.</span>
+        </a>
+      </nav>
+    </section>
+
+    <section class="band">
+      <h2>Working Assumptions</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th>Assumption</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Platform</td>
+            <td>Tiny Tapeout Sky130 digital design with the standard Verilog wrapper and byte-wide host I/O.</td>
+          </tr>
+          <tr>
+            <td>Arithmetic</td>
+            <td>Use signed int4 operands, packed two per byte, with signed 16-bit accumulators.</td>
+          </tr>
+          <tr>
+            <td>Memory</td>
+            <td>Use tiny on-chip operand/result registers for a fixed <code>4 x 2</code> toy attention example.</td>
+          </tr>
+          <tr>
+            <td>Transformer scope</td>
+            <td>Target one serialized single-head attention pass with on-chip Q/K/V projection and clipped-linear normalization.</td>
+          </tr>
+          <tr>
+            <td>Implementation status</td>
+            <td>Full attention RTL and wrapper pass source and powered gate simulation. The hardened 2x2 macro and Tiny Tapeout precheck pass locally.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Current Verification</h2>
+      <ol>
+        <li>18 Python tests plus two Icarus end-to-end transactions pass.</li>
+        <li>Wrapper-level cocotb passes against source RTL and the powered routed netlist.</li>
+        <li>The 2x2 macro uses 65.043% placement area, meets 10 MHz, and passes Tiny Tapeout precheck.</li>
+        <li>Before shuttle submission: review residual max-slew warnings and run the official cloud workflow on a frozen commit.</li>
+      </ol>
+    </section>
+  </main>
+</body>
+</html>
