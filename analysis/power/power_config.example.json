@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "design_name": "tt_um_madhavkarnati_toy_tpu",
+  "corner": "nom_tt_025C_1v80",
+  "clock": {
+    "port": "clk",
+    "period_ns": 100
+  },
+  "artifacts": {
+    "tech_lef": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__nom.tlef",
+    "cell_lef_ef": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_ef_sc_hd.lef",
+    "cell_lef_hd": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+    "liberty": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+    "netlist": "runs/wokwi/final/nl/tt_um_madhavkarnati_toy_tpu.nl.v",
+    "spef": "runs/wokwi/final/spef/nom/tt_um_madhavkarnati_toy_tpu.nom.spef",
+    "sdc": "runs/wokwi/52-openroad-fillinsertion/tt_um_madhavkarnati_toy_tpu.sdc"
+  },
+  "measurement": {
+    "vcd": "analysis/benchmark/results/gate_warm_baseline.vcd",
+    "scope": "tb.user_project"
+  },
+  "execution": {
+    "docker_bin": "docker",
+    "container_image": "ghcr.io/librelane/librelane@sha256:25e8d8a54dd9587132971f3061dfdbbab7b4c4d07a454a62d623543d862d3abb"
+  }
+}
