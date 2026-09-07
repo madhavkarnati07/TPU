@@ -1,0 +1,4 @@
+variant,mac_lanes,energy_per_attention_nj,throughput_attentions_per_second,single_transaction_latency_cycles,steady_state_initiation_interval_cycles,lane_utilization,useful_mac_operations,idle_subtracted_incremental_energy_per_attention_nj,standard_cell_area_um2,standard_cell_count,timing_status,routing_drc_status,magic_drc_status,lvs_status,max_slew_violation_count,max_cap_violation_count,non_dominated,dominated_by
+mac1,1,5.63557116579,62893.08176100629,158.0,159.0,0.7567567567567568,112,0.8359271167500005,46757.3,5065,pass,pass,pass,pass,1171,0,True,
+mac2,2,4.556753882170001,84033.61344537816,118.0,119.0,0.5185185185185185,112,0.80741318287,49416.1,5395,pass,pass,pass,pass,1301,1,True,
+mac4,4,3.2235494287500006,133333.33333333334,74.0,75.0,0.4375,112,0.7811536484999998,56065.0,6071,pass,pass,pass,pass,1623,9,True,

@@ -4,9 +4,10 @@ PYTHON ?= .venv/bin/python
 SYSTEM_PYTHON ?= python3
 IVERILOG ?= iverilog
 VVP ?= vvp
+MAC_LANES ?= 2
 BUILD_DIR := .build
 PE_TB := $(BUILD_DIR)/pe_tb.vvp
-ATTENTION_TB := $(BUILD_DIR)/attention_tb.vvp
+ATTENTION_TB := $(BUILD_DIR)/attention_mac$(MAC_LANES)_tb.vvp
 ATTENTION_VECTORS := $(BUILD_DIR)/attention_vectors.vh
 
 setup:
@@ -46,6 +47,7 @@ $(ATTENTION_VECTORS): toy_attention.py sim/generate_attention_vectors.py
 $(ATTENTION_TB): $(ATTENTION_VECTORS) ../src/dual_int4_mac.v ../src/toy_attention_core.v ../src/project.v sim/tb_toy_attention.v
 	mkdir -p $(BUILD_DIR)
 	$(IVERILOG) -g2012 -Wall -I $(BUILD_DIR) -s tb_toy_attention -o $(ATTENTION_TB) \
+		-Ptb_toy_attention.MAC_LANES=$(MAC_LANES) \
 		../src/dual_int4_mac.v ../src/toy_attention_core.v \
 		../src/project.v sim/tb_toy_attention.v
 

@@ -2,20 +2,25 @@ SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 PYTHON ?= python3
 BENCHMARK_KIND ?= active
+MAC_LANES ?= 2
+VARIANT ?= baseline
 
 BENCHMARK_DIR := $(CURDIR)
 ROOT := $(abspath $(BENCHMARK_DIR)/../..)
 SRC_DIR := $(ROOT)/src
 PROJECT_SOURCES := dual_int4_mac.v toy_attention_core.v project.v
+BENCHMARK_PDK := sky130A
+BENCHMARK_SCL := sky130_fd_sc_hd
 
 ifneq ($(GATES),yes)
-SIM_BUILD := $(BENCHMARK_DIR)/sim_build/rtl
+SIM_BUILD := $(BENCHMARK_DIR)/sim_build/rtl-$(VARIANT)-mac$(MAC_LANES)
 BENCHMARK_MODE := rtl
 BENCHMARK_GATE_NETLIST :=
 BENCHMARK_PDK_ROOT :=
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
+COMPILE_ARGS += -Ptb.MAC_LANES=$(MAC_LANES)
 else
-SIM_BUILD := $(BENCHMARK_DIR)/sim_build/gate
+SIM_BUILD := $(BENCHMARK_DIR)/sim_build/gate-$(VARIANT)
 BENCHMARK_MODE := gate
 NETLIST ?= $(ROOT)/test/gate_level_netlist.v
 ifndef PDK_ROOT
@@ -30,9 +35,17 @@ BENCHMARK_PDK_ROOT := $(abspath $(PDK_ROOT))
 endif
 
 ifeq ($(BENCHMARK_KIND),active)
+ifeq ($(VARIANT),baseline)
 BENCHMARK_BASENAME := $(BENCHMARK_MODE)_warm_baseline
+else
+BENCHMARK_BASENAME := $(BENCHMARK_MODE)_$(VARIANT)_warm
+endif
 else ifeq ($(BENCHMARK_KIND),idle)
+ifeq ($(VARIANT),baseline)
 BENCHMARK_BASENAME := $(BENCHMARK_MODE)_idle_warm_window
+else
+BENCHMARK_BASENAME := $(BENCHMARK_MODE)_$(VARIANT)_idle
+endif
 else
 $(error BENCHMARK_KIND must be active or idle)
 endif
@@ -49,8 +62,12 @@ COCOTB_TEST_MODULES := test_warm_benchmark
 export BENCHMARK_MODE
 export BENCHMARK_OUTPUT
 export BENCHMARK_KIND
+export MAC_LANES
+export VARIANT
 export BENCHMARK_GATE_NETLIST
 export BENCHMARK_PDK_ROOT
+export BENCHMARK_PDK
+export BENCHMARK_SCL
 export BENCHMARK_SIMULATOR := $(SIM)
 
 .PHONY: benchmark verify-vcd

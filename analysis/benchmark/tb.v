@@ -1,7 +1,9 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-module tb ();
+module tb #(
+    parameter integer MAC_LANES = 2
+) ();
     reg clk;
     reg rst_n;
     reg ena;
@@ -36,7 +38,11 @@ module tb ();
         end
     end
 
-    tt_um_madhavkarnati_toy_tpu user_project (
+    tt_um_madhavkarnati_toy_tpu
+`ifndef GL_TEST
+    #(.MAC_LANES(MAC_LANES))
+`endif
+    user_project (
 `ifdef GL_TEST
         .VPWR(VPWR),
         .VGND(VGND),

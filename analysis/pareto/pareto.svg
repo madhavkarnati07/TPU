@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="560" viewBox="0 0 860 560" role="img" aria-labelledby="title desc">
+<title id="title">Toy attention MAC lane Pareto plot</title>
+<desc id="desc">Energy per attention versus throughput. Green points are non-dominated.</desc>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<style>text{font-family:Arial,sans-serif;fill:#17212b}.axis{stroke:#52606d;stroke-width:1}.grid{stroke:#d7dee5;stroke-width:1}.label{font-size:13px}.small{font-size:12px}.title{font-size:20px;font-weight:bold}.table{font-size:12px}</style>
+<text x="110" y="25" class="title">Fixed-workload MAC-lane sweep</text>
+<line class="grid" x1="110" y1="360.00" x2="820" y2="360.00"/>
+<text class="small" x="98" y="364.00" text-anchor="end">3.22 nJ</text>
+<line class="grid" x1="110.00" y1="42" x2="110.00" y2="360"/>
+<text class="small" x="110.00" y="380" text-anchor="middle">6.29e+04</text>
+<line class="grid" x1="110" y1="201.00" x2="820" y2="201.00"/>
+<text class="small" x="98" y="205.00" text-anchor="end">4.43 nJ</text>
+<line class="grid" x1="465.00" y1="42" x2="465.00" y2="360"/>
+<text class="small" x="465.00" y="380" text-anchor="middle">9.81e+04</text>
+<line class="grid" x1="110" y1="42.00" x2="820" y2="42.00"/>
+<text class="small" x="98" y="46.00" text-anchor="end">5.64 nJ</text>
+<line class="grid" x1="820.00" y1="42" x2="820.00" y2="360"/>
+<text class="small" x="820.00" y="380" text-anchor="middle">1.33e+05</text>
+<line class="axis" x1="110" y1="360" x2="820" y2="360"/>
+<line class="axis" x1="110" y1="42" x2="110" y2="360"/>
+<text class="label" x="465.0" y="405" text-anchor="middle">Throughput (attentions/s, higher is better)</text>
+<text class="label" transform="translate(25 201.0) rotate(-90)" text-anchor="middle">Total active energy per attention (nJ, lower is better)</text>
+<circle cx="110.00" cy="42.00" r="7" fill="#007f6d" stroke="#17212b" stroke-width="1"/>
+<text class="label" x="120.00" y="62.00" text-anchor="start">mac1 (1 MAC)</text>
+<circle cx="323.09" cy="184.23" r="7" fill="#007f6d" stroke="#17212b" stroke-width="1"/>
+<text class="label" x="333.09" y="174.23" text-anchor="start">mac2 (2 MAC)</text>
+<circle cx="820.00" cy="360.00" r="7" fill="#007f6d" stroke="#17212b" stroke-width="1"/>
+<text class="label" x="810.00" y="350.00" text-anchor="end">mac4 (4 MAC)</text>
+<text class="label" x="110" y="390">Green: non-dominated across energy, area, and throughput. Orange: dominated.</text>
+<line class="axis" x1="110" y1="410" x2="820" y2="410"/>
+<text class="table" x="110" y="430">Variant</text>
+<text class="table" x="250" y="430">Energy (nJ)</text>
+<text class="table" x="380" y="430">Throughput (/s)</text>
+<text class="table" x="540" y="430">Area (um2)</text>
+<text class="table" x="660" y="430">Timing</text>
+<text class="table" x="110" y="453">mac1 (Pareto)</text>
+<text class="table" x="250" y="453">5.63557</text>
+<text class="table" x="380" y="453">62893.1</text>
+<text class="table" x="540" y="453">46757.3</text>
+<text class="table" x="660" y="453">pass</text>
+<text class="table" x="110" y="475">mac2 (Pareto)</text>
+<text class="table" x="250" y="475">4.55675</text>
+<text class="table" x="380" y="475">84033.6</text>
+<text class="table" x="540" y="475">49416.1</text>
+<text class="table" x="660" y="475">pass</text>
+<text class="table" x="110" y="497">mac4 (Pareto)</text>
+<text class="table" x="250" y="497">3.22355</text>
+<text class="table" x="380" y="497">133333</text>
+<text class="table" x="540" y="497">56065</text>
+<text class="table" x="660" y="497">pass</text>
+</svg>

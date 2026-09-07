@@ -1,0 +1,1431 @@
+{
+  "aggregate_vcd_measurement": {
+    "duration_cycles": 1904,
+    "duration_ns": 190400,
+    "end_cycle": 1916,
+    "energy_per_attention_formula": "average_power_w * duration_ns * 1e-9 / transaction_count",
+    "start_cycle": 12,
+    "transaction_count": 16
+  },
+  "benchmark": "warm_attention_mac2",
+  "clock_hz": 10000000,
+  "mac_lanes": 2,
+  "measurement_boundary": {
+    "compute": "RUN_ATTENTION acceptance through done assertion",
+    "host": "always ready, no intentional stalls",
+    "latency": "LOAD_X command acceptance through fourth result-byte handshake",
+    "vcd": "first LOAD_X acceptance through one full clock period after the final result-byte handshake"
+  },
+  "measurement_kind": "warm_attention",
+  "phase_metrics_available": true,
+  "provenance": {
+    "gate_netlist": null,
+    "gate_unit_delay": null,
+    "measurement_kind": "warm_attention",
+    "pdk": null,
+    "simulation_mode": "rtl",
+    "simulator": "icarus"
+  },
+  "resident_weights_packed": {
+    "wk": [
+      16,
+      1
+    ],
+    "wq": [
+      16,
+      1
+    ],
+    "wv": [
+      16,
+      2
+    ]
+  },
+  "simulation_mode": "rtl",
+  "single_transaction_latency_cycles": 118.0,
+  "steady_state_initiation_interval_cycles": 119.0,
+  "steady_state_throughput_attentions_per_second": 84033.61344537816,
+  "summary": {
+    "all_outputs_match_golden_model": true,
+    "compute_cycles": {
+      "max": 108,
+      "mean": 108.0,
+      "min": 108
+    },
+    "initiation_interval_cycles": {
+      "max": 119,
+      "mean": 119.0,
+      "min": 119
+    },
+    "latency_cycles": {
+      "max": 118,
+      "mean": 118.0,
+      "min": 118
+    },
+    "rtl_phase_metrics_per_attention": {
+      "lane_active_cycles": {
+        "lane0": 72,
+        "lane1": 40,
+        "total": 112
+      },
+      "lane_slot_cycles": 216,
+      "lane_utilization": 0.5185185185185185,
+      "phase_cycles": {
+        "clip": 16,
+        "max": 16,
+        "norm": 4,
+        "project": 24,
+        "score": 32,
+        "weight": 16
+      },
+      "useful_mac_operations": 112
+    }
+  },
+  "transaction_count": 16,
+  "transactions": [
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 125,
+        "fourth_result_handshake": 130,
+        "load_x_accept": 12,
+        "run_accept": 17
+      },
+      "expected_output": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ]
+      ],
+      "expected_result_bytes": [
+        1,
+        2,
+        1,
+        2
+      ],
+      "index": 0,
+      "initiation_interval_cycles": null,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        1,
+        2,
+        1,
+        2
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          -1,
+          1
+        ]
+      ],
+      "x_packed": [
+        16,
+        1,
+        17,
+        241
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 244,
+        "fourth_result_handshake": 249,
+        "load_x_accept": 131,
+        "run_accept": 136
+      },
+      "expected_output": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "expected_result_bytes": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "index": 1,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "x_packed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 363,
+        "fourth_result_handshake": 368,
+        "load_x_accept": 250,
+        "run_accept": 255
+      },
+      "expected_output": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "expected_result_bytes": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "index": 2,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          -1,
+          0
+        ],
+        [
+          0,
+          -1
+        ]
+      ],
+      "x_packed": [
+        16,
+        1,
+        240,
+        15
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 482,
+        "fourth_result_handshake": 487,
+        "load_x_accept": 369,
+        "run_accept": 374
+      },
+      "expected_output": [
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          2,
+          -1
+        ]
+      ],
+      "expected_result_bytes": [
+        19,
+        34,
+        4,
+        47
+      ],
+      "index": 3,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        19,
+        34,
+        4,
+        47
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          -1,
+          2
+        ],
+        [
+          2,
+          -1
+        ]
+      ],
+      "x_packed": [
+        18,
+        33,
+        242,
+        47
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 601,
+        "fourth_result_handshake": 606,
+        "load_x_accept": 488,
+        "run_accept": 493
+      },
+      "expected_output": [
+        [
+          3,
+          0
+        ],
+        [
+          0,
+          6
+        ],
+        [
+          -3,
+          0
+        ],
+        [
+          0,
+          -6
+        ]
+      ],
+      "expected_result_bytes": [
+        48,
+        6,
+        208,
+        10
+      ],
+      "index": 4,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        48,
+        6,
+        208,
+        10
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          3,
+          0
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          -3,
+          0
+        ],
+        [
+          0,
+          -3
+        ]
+      ],
+      "x_packed": [
+        48,
+        3,
+        208,
+        13
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 720,
+        "fourth_result_handshake": 725,
+        "load_x_accept": 607,
+        "run_accept": 612
+      },
+      "expected_output": [
+        [
+          7,
+          7
+        ],
+        [
+          -8,
+          -8
+        ],
+        [
+          7,
+          -8
+        ],
+        [
+          -8,
+          7
+        ]
+      ],
+      "expected_result_bytes": [
+        119,
+        136,
+        120,
+        135
+      ],
+      "index": 5,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        119,
+        136,
+        120,
+        135
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          7,
+          7
+        ],
+        [
+          -8,
+          -8
+        ],
+        [
+          7,
+          -8
+        ],
+        [
+          -8,
+          7
+        ]
+      ],
+      "x_packed": [
+        119,
+        136,
+        120,
+        135
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 839,
+        "fourth_result_handshake": 844,
+        "load_x_accept": 726,
+        "run_accept": 731
+      },
+      "expected_output": [
+        [
+          -8,
+          7
+        ],
+        [
+          7,
+          -8
+        ],
+        [
+          7,
+          -8
+        ],
+        [
+          -4,
+          -8
+        ]
+      ],
+      "expected_result_bytes": [
+        135,
+        120,
+        120,
+        200
+      ],
+      "index": 6,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        135,
+        120,
+        120,
+        200
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          -8,
+          7
+        ],
+        [
+          7,
+          -8
+        ],
+        [
+          3,
+          -2
+        ],
+        [
+          -4,
+          -5
+        ]
+      ],
+      "x_packed": [
+        135,
+        120,
+        62,
+        203
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 958,
+        "fourth_result_handshake": 963,
+        "load_x_accept": 845,
+        "run_accept": 850
+      },
+      "expected_output": [
+        [
+          3,
+          -5
+        ],
+        [
+          -1,
+          7
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          -6,
+          2
+        ]
+      ],
+      "expected_result_bytes": [
+        59,
+        247,
+        80,
+        162
+      ],
+      "index": 7,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        59,
+        247,
+        80,
+        162
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          2,
+          -3
+        ],
+        [
+          -1,
+          4
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          -6,
+          1
+        ]
+      ],
+      "x_packed": [
+        45,
+        244,
+        80,
+        161
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 1077,
+        "fourth_result_handshake": 1082,
+        "load_x_accept": 964,
+        "run_accept": 969
+      },
+      "expected_output": [
+        [
+          7,
+          0
+        ],
+        [
+          0,
+          7
+        ],
+        [
+          -8,
+          0
+        ],
+        [
+          0,
+          -8
+        ]
+      ],
+      "expected_result_bytes": [
+        112,
+        7,
+        128,
+        8
+      ],
+      "index": 8,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        112,
+        7,
+        128,
+        8
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          7,
+          0
+        ],
+        [
+          0,
+          7
+        ],
+        [
+          -8,
+          0
+        ],
+        [
+          0,
+          -8
+        ]
+      ],
+      "x_packed": [
+        112,
+        7,
+        128,
+        8
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 1196,
+        "fourth_result_handshake": 1201,
+        "load_x_accept": 1083,
+        "run_accept": 1088
+      },
+      "expected_output": [
+        [
+          4,
+          7
+        ],
+        [
+          4,
+          -8
+        ],
+        [
+          -4,
+          7
+        ],
+        [
+          -4,
+          -8
+        ]
+      ],
+      "expected_result_bytes": [
+        71,
+        72,
+        199,
+        200
+      ],
+      "index": 9,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        71,
+        72,
+        199,
+        200
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          4,
+          4
+        ],
+        [
+          4,
+          -4
+        ],
+        [
+          -4,
+          4
+        ],
+        [
+          -4,
+          -4
+        ]
+      ],
+      "x_packed": [
+        68,
+        76,
+        196,
+        204
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 1315,
+        "fourth_result_handshake": 1320,
+        "load_x_accept": 1202,
+        "run_accept": 1207
+      },
+      "expected_output": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "expected_result_bytes": [
+        18,
+        18,
+        18,
+        18
+      ],
+      "index": 10,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        18,
+        18,
+        18,
+        18
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "x_packed": [
+        17,
+        17,
+        17,
+        17
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 1434,
+        "fourth_result_handshake": 1439,
+        "load_x_accept": 1321,
+        "run_accept": 1326
+      },
+      "expected_output": [
+        [
+          2,
+          4
+        ],
+        [
+          -2,
+          -4
+        ],
+        [
+          2,
+          -4
+        ],
+        [
+          -2,
+          4
+        ]
+      ],
+      "expected_result_bytes": [
+        36,
+        236,
+        44,
+        228
+      ],
+      "index": 11,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        36,
+        236,
+        44,
+        228
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          2,
+          2
+        ],
+        [
+          -2,
+          -2
+        ],
+        [
+          2,
+          -2
+        ],
+        [
+          -2,
+          2
+        ]
+      ],
+      "x_packed": [
+        34,
+        238,
+        46,
+        226
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 1553,
+        "fourth_result_handshake": 1558,
+        "load_x_accept": 1440,
+        "run_accept": 1445
+      },
+      "expected_output": [
+        [
+          6,
+          -2
+        ],
+        [
+          -4,
+          6
+        ],
+        [
+          3,
+          -8
+        ],
+        [
+          -4,
+          7
+        ]
+      ],
+      "expected_result_bytes": [
+        110,
+        198,
+        56,
+        199
+      ],
+      "index": 12,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        110,
+        198,
+        56,
+        199
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          6,
+          -1
+        ],
+        [
+          -5,
+          2
+        ],
+        [
+          3,
+          -7
+        ],
+        [
+          -4,
+          5
+        ]
+      ],
+      "x_packed": [
+        111,
+        178,
+        57,
+        197
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 1672,
+        "fourth_result_handshake": 1677,
+        "load_x_accept": 1559,
+        "run_accept": 1564
+      },
+      "expected_output": [
+        [
+          0,
+          7
+        ],
+        [
+          7,
+          0
+        ],
+        [
+          0,
+          -8
+        ],
+        [
+          -8,
+          0
+        ]
+      ],
+      "expected_result_bytes": [
+        7,
+        112,
+        8,
+        128
+      ],
+      "index": 13,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        7,
+        112,
+        8,
+        128
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          0,
+          7
+        ],
+        [
+          7,
+          0
+        ],
+        [
+          0,
+          -8
+        ],
+        [
+          -8,
+          0
+        ]
+      ],
+      "x_packed": [
+        7,
+        112,
+        8,
+        128
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 1791,
+        "fourth_result_handshake": 1796,
+        "load_x_accept": 1678,
+        "run_accept": 1683
+      },
+      "expected_output": [
+        [
+          5,
+          2
+        ],
+        [
+          1,
+          7
+        ],
+        [
+          -5,
+          -2
+        ],
+        [
+          -1,
+          -8
+        ]
+      ],
+      "expected_result_bytes": [
+        82,
+        23,
+        190,
+        248
+      ],
+      "index": 14,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        82,
+        23,
+        190,
+        248
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          5,
+          1
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          -5,
+          -1
+        ],
+        [
+          -1,
+          -5
+        ]
+      ],
+      "x_packed": [
+        81,
+        21,
+        191,
+        251
+      ]
+    },
+    {
+      "compute_cycles": 108,
+      "cycle_boundaries": {
+        "done_assert": 1910,
+        "fourth_result_handshake": 1915,
+        "load_x_accept": 1797,
+        "run_accept": 1802
+      },
+      "expected_output": [
+        [
+          7,
+          -8
+        ],
+        [
+          -7,
+          7
+        ],
+        [
+          7,
+          -8
+        ],
+        [
+          -7,
+          7
+        ]
+      ],
+      "expected_result_bytes": [
+        120,
+        151,
+        120,
+        151
+      ],
+      "index": 15,
+      "initiation_interval_cycles": 119,
+      "latency_cycles": 118,
+      "observed_result_bytes": [
+        120,
+        151,
+        120,
+        151
+      ],
+      "rtl_metrics": {
+        "lane_active_cycles": {
+          "lane0": 72,
+          "lane1": 40,
+          "total": 112
+        },
+        "lane_slot_cycles": 216,
+        "lane_utilization": 0.5185185185185185,
+        "phase_cycles": {
+          "clip": 16,
+          "max": 16,
+          "norm": 4,
+          "project": 24,
+          "score": 32,
+          "weight": 16
+        },
+        "useful_mac_operations": 112
+      },
+      "x": [
+        [
+          7,
+          -7
+        ],
+        [
+          -7,
+          7
+        ],
+        [
+          6,
+          -6
+        ],
+        [
+          -6,
+          6
+        ]
+      ],
+      "x_packed": [
+        121,
+        151,
+        106,
+        166
+      ]
+    }
+  ],
+  "variant": "mac2"
+}

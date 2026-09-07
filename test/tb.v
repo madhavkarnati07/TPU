@@ -1,7 +1,9 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-module tb ();
+module tb #(
+    parameter integer MAC_LANES = 2
+) ();
     initial begin
         $dumpfile("tb.fst");
         $dumpvars(0, tb);
@@ -22,7 +24,11 @@ module tb ();
     wire VGND = 1'b0;
 `endif
 
-    tt_um_madhavkarnati_toy_tpu user_project (
+    tt_um_madhavkarnati_toy_tpu
+`ifndef GL_TEST
+    #(.MAC_LANES(MAC_LANES))
+`endif
+    user_project (
 `ifdef GL_TEST
         .VPWR(VPWR),
         .VGND(VGND),

@@ -1,0 +1,61 @@
+{
+  "annotation_evidence": {
+    "annotated_pin_count": 17237,
+    "annotated_pin_coverage_percent": 100.0,
+    "report": "analysis/power/out/mac4-active/activity_annotation.rpt",
+    "scope_signal_count": 79685,
+    "source": "VCD",
+    "unannotated_pin_count": 0,
+    "vcd_reported": true
+  },
+  "energy": {
+    "per_attention_nj": 3.2235494287500006,
+    "window_j": 5.157679086000001e-08
+  },
+  "measurement": {
+    "benchmark": "warm_attention_mac4",
+    "benchmark_result": "analysis/benchmark/results/gate_mac4_warm.json",
+    "duration_ns": 120000,
+    "kind": "warm_attention",
+    "requested_scope": "tb.user_project",
+    "scope": "tb/user_project",
+    "transactions": 16,
+    "vcd": "analysis/benchmark/results/gate_mac4_warm.vcd",
+    "vcd_window": {
+      "duration_ns": 120000,
+      "first_time_ns": 1200,
+      "first_timestamp": 1200000,
+      "last_time_ns": 121200,
+      "last_timestamp": 121200000,
+      "timescale": "1 ps",
+      "verified_against_benchmark": true
+    }
+  },
+  "physical_context": {
+    "artifacts": {
+      "cell_lef_ef": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_ef_sc_hd.lef",
+      "cell_lef_hd": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "liberty": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+      "netlist": "runs/mac4/final/nl/tt_um_madhavkarnati_toy_tpu.nl.v",
+      "sdc": "runs/mac4/52-openroad-fillinsertion/tt_um_madhavkarnati_toy_tpu.sdc",
+      "spef": "runs/mac4/final/spef/nom/tt_um_madhavkarnati_toy_tpu.nom.spef",
+      "tech_lef": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__nom.tlef"
+    },
+    "clock_period_ns": 100,
+    "corner": "nom_tt_025C_1v80",
+    "tool": {
+      "container_image": "ghcr.io/librelane/librelane@sha256:25e8d8a54dd9587132971f3061dfdbbab7b4c4d07a454a62d623543d862d3abb",
+      "librelane_version": "3.0.3",
+      "openroad_command": "openroad -exit -no_splash power.tcl",
+      "report_power_digits": 9
+    }
+  },
+  "power_w": {
+    "internal": 0.0002958103141,
+    "leakage": 3.371087942e-08,
+    "switching": 0.0001339625742,
+    "total": 0.0004298065905
+  },
+  "schema_version": "1.1",
+  "status": "measured"
+}

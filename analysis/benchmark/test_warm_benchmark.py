@@ -1,4 +1,4 @@
-"""Cocotb warm-workload benchmark for the fixed two-MAC attention design."""
+"""Cocotb warm-workload benchmark for a fixed attention MAC variant."""
 
 from __future__ import annotations
 
@@ -16,7 +16,6 @@ from workload import WARM_INPUTS, golden_case, packed_weights
 
 CLOCK_PERIOD_NS = 100
 CLOCK_HZ = 10_000_000
-MATCHED_VCD_WINDOW_CYCLES = 1904
 READY_RX = 4
 VALID_TX = 5
 DONE = 7
@@ -36,11 +35,31 @@ STATE_NAMES = {
     6: "weight",
     7: "norm",
 }
-LANES_SCHEDULED_BY_STATE = {
-    2: (True, True),
-    3: (True, False),
-    6: (True, True),
+MAC_LANES = int(os.environ.get("MAC_LANES", "2"))
+VARIANT = os.environ.get("VARIANT", "baseline")
+EXPECTED_PHASE_CYCLES = {
+    1: {"project": 48, "score": 32, "max": 16, "clip": 16, "weight": 32, "norm": 4},
+    2: {"project": 24, "score": 32, "max": 16, "clip": 16, "weight": 16, "norm": 4},
+    4: {"project": 12, "score": 8, "max": 16, "clip": 16, "weight": 8, "norm": 4},
 }
+if MAC_LANES not in EXPECTED_PHASE_CYCLES:
+    raise ValueError(f"MAC_LANES must be 1, 2, or 4; got {MAC_LANES}")
+
+EXPECTED_COMPUTE_CYCLES = sum(EXPECTED_PHASE_CYCLES[MAC_LANES].values())
+EXPECTED_INITIATION_INTERVAL_CYCLES = EXPECTED_COMPUTE_CYCLES + 11
+MATCHED_VCD_WINDOW_CYCLES = (
+    len(WARM_INPUTS) * EXPECTED_INITIATION_INTERVAL_CYCLES
+)
+
+
+def scheduled_lane_count(state: int) -> int:
+    if state not in (2, 3, 6):
+        return 0
+    if MAC_LANES == 1:
+        return 1
+    if MAC_LANES == 2:
+        return 1 if state == 3 else 2
+    return 4
 
 
 def cycle_number() -> int:
@@ -134,8 +153,7 @@ async def wait_for_done(dut, core) -> tuple[int, dict | None]:
     phase_cycles = (
         {name: 0 for name in STATE_NAMES.values()} if core is not None else None
     )
-    lane0_active_cycles = 0
-    lane1_active_cycles = 0
+    lane_active_cycles = [0 for _ in range(MAC_LANES)]
 
     # send_byte returns on a falling edge. Sample that stable state before the
     # following rising edge consumes its MAC/control work, then repeat from
@@ -146,13 +164,8 @@ async def wait_for_done(dut, core) -> tuple[int, dict | None]:
             name = STATE_NAMES.get(state)
             if name is not None:
                 phase_cycles[name] += 1
-                lane0_active, lane1_active = LANES_SCHEDULED_BY_STATE.get(
-                    state, (False, False)
-                )
-                if lane0_active:
-                    lane0_active_cycles += 1
-                if lane1_active:
-                    lane1_active_cycles += 1
+                for lane in range(scheduled_lane_count(state)):
+                    lane_active_cycles[lane] += 1
 
         await RisingEdge(dut.clk)
         done_cycle = cycle_number()
@@ -165,17 +178,21 @@ async def wait_for_done(dut, core) -> tuple[int, dict | None]:
         if done_after_rising or status_bit(dut, DONE):
             if core is None:
                 return done_cycle, None
-            active_lane_cycles = lane0_active_cycles + lane1_active_cycles
+            active_lane_cycles = sum(lane_active_cycles)
             compute_cycles = sum(phase_cycles.values())
             return done_cycle, {
                 "phase_cycles": phase_cycles,
                 "lane_active_cycles": {
-                    "lane0": lane0_active_cycles,
-                    "lane1": lane1_active_cycles,
+                    **{
+                        f"lane{lane}": cycles
+                        for lane, cycles in enumerate(lane_active_cycles)
+                    },
                     "total": active_lane_cycles,
                 },
-                "lane_slot_cycles": compute_cycles * 2,
-                "lane_utilization": active_lane_cycles / (compute_cycles * 2),
+                "useful_mac_operations": active_lane_cycles,
+                "lane_slot_cycles": compute_cycles * MAC_LANES,
+                "lane_utilization": active_lane_cycles
+                / (compute_cycles * MAC_LANES),
             }
 
     raise AssertionError("timed out waiting for attention completion")
@@ -205,6 +222,8 @@ def simulation_provenance(measurement_kind: str) -> dict:
     pdk = provenance_path(pdk_root)
     if pdk is not None:
         pdk["identifier"] = Path(pdk_root).resolve().name
+        pdk["pdk"] = os.environ.get("BENCHMARK_PDK")
+        pdk["standard_cell_library"] = os.environ.get("BENCHMARK_SCL")
     return {
         "simulator": os.environ.get("BENCHMARK_SIMULATOR", "unknown"),
         "simulation_mode": mode,
@@ -270,6 +289,8 @@ async def test_warm_attention_baseline(dut):
         write_result(
             {
                 "benchmark": "idle_warm_window",
+                "variant": VARIANT,
+                "mac_lanes": MAC_LANES,
                 "measurement_kind": "idle_warm_window",
                 "simulation_mode": os.environ.get("BENCHMARK_MODE", "rtl"),
                 "clock_hz": CLOCK_HZ,
@@ -356,7 +377,9 @@ async def test_warm_attention_baseline(dut):
     steady_state_initiation_interval = mean(initiation_interval_cycles)
     phase_metrics_available = core is not None
     payload = {
-        "benchmark": "warm_attention_baseline",
+        "benchmark": f"warm_attention_{VARIANT}",
+        "variant": VARIANT,
+        "mac_lanes": MAC_LANES,
         "measurement_kind": "warm_attention",
         "simulation_mode": os.environ.get("BENCHMARK_MODE", "rtl"),
         "clock_hz": CLOCK_HZ,
@@ -408,6 +431,15 @@ async def test_warm_attention_baseline(dut):
     if phase_metrics_available:
         first_metrics = transactions[0]["rtl_metrics"]
         assert all(row["rtl_metrics"] == first_metrics for row in transactions)
+        assert first_metrics["phase_cycles"] == EXPECTED_PHASE_CYCLES[MAC_LANES]
+        assert first_metrics["useful_mac_operations"] == 112
         payload["summary"]["rtl_phase_metrics_per_attention"] = first_metrics
+
+    assert payload["summary"]["compute_cycles"] == {
+        "min": EXPECTED_COMPUTE_CYCLES,
+        "max": EXPECTED_COMPUTE_CYCLES,
+        "mean": float(EXPECTED_COMPUTE_CYCLES),
+    }
+    assert steady_state_initiation_interval == EXPECTED_INITIATION_INTERVAL_CYCLES
 
     write_result(payload)

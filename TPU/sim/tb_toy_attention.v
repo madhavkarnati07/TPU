@@ -1,6 +1,8 @@
 `timescale 1ns / 1ps
 
-module tb_toy_attention;
+module tb_toy_attention #(
+    parameter integer MAC_LANES = 2
+);
     localparam [7:0] CMD_LOAD_X        = 8'h10;
     localparam [7:0] CMD_LOAD_WQ       = 8'h11;
     localparam [7:0] CMD_LOAD_WK       = 8'h12;
@@ -34,7 +36,9 @@ module tb_toy_attention;
 
     `include "attention_vectors.vh"
 
-    tt_um_madhavkarnati_toy_tpu dut (
+    tt_um_madhavkarnati_toy_tpu #(
+        .MAC_LANES(MAC_LANES)
+    ) dut (
         .ui_in(ui_in),
         .uo_out(uo_out),
         .uio_in(uio_in),

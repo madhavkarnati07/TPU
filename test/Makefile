@@ -1,12 +1,14 @@
 SIM ?= icarus
 FST ?= -fst
 TOPLEVEL_LANG ?= verilog
+MAC_LANES ?= 2
 SRC_DIR = $(PWD)/../src
 PROJECT_SOURCES = dual_int4_mac.v toy_attention_core.v project.v
 
 ifneq ($(GATES),yes)
-SIM_BUILD = sim_build/rtl
+SIM_BUILD = sim_build/rtl-mac$(MAC_LANES)
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
+COMPILE_ARGS += -Ptb.MAC_LANES=$(MAC_LANES)
 else
 SIM_BUILD = sim_build/gl
 COMPILE_ARGS += -DGL_TEST -DFUNCTIONAL -DUSE_POWER_PINS -DSIM -DUNIT_DELAY=\#1

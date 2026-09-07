@@ -5,9 +5,10 @@ Sky130 2x2 tile. The chip accepts four 2D signed-int4 tokens and three 2x2
 projection matrices, computes Q/K/V and one complete attention head, then
 returns four packed result bytes.
 
-The design favors a small, inspectable control flow over throughput. Two
-signed-int4 MAC lanes are reused for projections and weighted V; score dot
-products serialize through lane 0.
+The default design favors a small, inspectable control flow over throughput.
+Two signed-int4 MAC lanes are reused for projections and weighted V; score dot
+products serialize through lane 0. A compile-time `MAC_LANES` parameter also
+elaborates one- and four-lane schedules for the fixed-workload Pareto study.
 
 ## Attention operation
 
@@ -79,8 +80,8 @@ make GATES=yes
 
 | Path | Purpose |
 | --- | --- |
-| `src/dual_int4_mac.v` | Two signed-int4 MAC lanes with signed-int16 sums |
-| `src/toy_attention_core.v` | Storage, byte protocol, controller FSM, and attention datapath |
+| `src/dual_int4_mac.v` | Scalar signed-int4 MAC primitive and two-lane wrapper |
+| `src/toy_attention_core.v` | Parameterized 1/2/4-lane schedules, storage, protocol, and controller FSM |
 | `src/project.v` | Tiny Tapeout top-level wrapper and pin mapping |
 | `TPU/toy_attention.py` | Exact NumPy golden model and traces |
 | `TPU/sim/tb_toy_attention.v` | Icarus end-to-end transaction checker |
@@ -98,6 +99,7 @@ three modules listed in `info.yaml`.
 - [Implemented high-level architecture](planning/toy-transformer-chip/sections/high-level-architecture.html)
 - [Design roadmap](planning/toy-transformer-chip/sections/design-roadmap.html)
 - [Tapeout verification evidence](TPU/docs/tapeout_verification.md)
+- [Initial 1/2/4-MAC Pareto analysis](analysis/pareto/README.md)
 
 ![Routed 2x2 toy-attention TPU](planning/toy-transformer-chip/assets/toy-tpu-layout.png)
 
@@ -106,3 +108,8 @@ meets 10 MHz with no setup or hold violations. Source RTL and the powered
 post-layout netlist pass the same cocotb tests, and all applicable Tiny Tapeout
 prechecks pass. Non-fatal maximum-slew warnings remain documented for review
 before shuttle submission.
+
+The Milestone 2 analysis additionally hardens 1-, 2-, and 4-MAC elaborations
+in the same 2x2 tile. Their routed gate simulations match the same 16 golden
+workloads, and the measured energy/throughput/area curve is in
+[`analysis/pareto/pareto.json`](analysis/pareto/pareto.json).

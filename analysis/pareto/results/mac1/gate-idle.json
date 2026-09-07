@@ -1,0 +1,50 @@
+{
+  "aggregate_vcd_measurement": {
+    "duration_cycles": 2544,
+    "duration_ns": 254400,
+    "end_cycle": 2556,
+    "matched_active_transaction_count": 16,
+    "start_cycle": 12,
+    "transaction_count": 0
+  },
+  "benchmark": "idle_warm_window",
+  "clock_hz": 10000000,
+  "host_activity": "none",
+  "mac_lanes": 1,
+  "matched_active_transaction_count": 16,
+  "measurement_kind": "idle_warm_window",
+  "provenance": {
+    "gate_netlist": {
+      "path": "runs/mac1/final/pnl/tt_um_madhavkarnati_toy_tpu.pnl.v",
+      "path_kind": "repo_relative"
+    },
+    "gate_unit_delay": "#1",
+    "measurement_kind": "idle_warm_window",
+    "pdk": {
+      "identifier": "8afc8346a57fe1ab7934ba5a6056ea8b43078e71",
+      "pdk": "sky130A",
+      "standard_cell_library": "sky130_fd_sc_hd",
+      "path": ".tt-pdk/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71",
+      "path_kind": "repo_relative"
+    },
+    "simulation_mode": "gate",
+    "simulator": "icarus"
+  },
+  "resident_weights_packed": {
+    "wk": [
+      16,
+      1
+    ],
+    "wq": [
+      16,
+      1
+    ],
+    "wv": [
+      16,
+      2
+    ]
+  },
+  "simulation_mode": "gate",
+  "transaction_count": 0,
+  "variant": "mac1"
+}

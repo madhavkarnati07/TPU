@@ -1,0 +1,4062 @@
+{
+  "experiment": {
+    "clock_hz": 10000000,
+    "description": "Fixed-workload signed-int4 toy-attention MAC-lane sweep.",
+    "mac_lane_counts": [
+      1,
+      2,
+      4
+    ],
+    "objectives": {
+      "maximize": [
+        "throughput_attentions_per_second"
+      ],
+      "minimize": [
+        "energy_per_attention_nj",
+        "standard_cell_area_um2"
+      ]
+    },
+    "workload": {
+      "identity": "warm_attention",
+      "measurement_boundary": {
+        "compute": "RUN_ATTENTION acceptance through done assertion",
+        "host": "always ready, no intentional stalls",
+        "latency": "LOAD_X command acceptance through fourth result-byte handshake",
+        "vcd": "first LOAD_X acceptance through one full clock period after the final result-byte handshake"
+      },
+      "resident_weights_packed": {
+        "wk": [
+          16,
+          1
+        ],
+        "wq": [
+          16,
+          1
+        ],
+        "wv": [
+          16,
+          2
+        ]
+      },
+      "transaction_count": 16,
+      "transactions": [
+        {
+          "expected_output": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ]
+          ],
+          "expected_result_bytes": [
+            1,
+            2,
+            1,
+            2
+          ],
+          "index": 0,
+          "observed_result_bytes": [
+            1,
+            2,
+            1,
+            2
+          ],
+          "x": [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              -1,
+              1
+            ]
+          ],
+          "x_packed": [
+            16,
+            1,
+            17,
+            241
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "expected_result_bytes": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "index": 1,
+          "observed_result_bytes": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "x": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "x_packed": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "expected_result_bytes": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "index": 2,
+          "observed_result_bytes": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "x": [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              -1,
+              0
+            ],
+            [
+              0,
+              -1
+            ]
+          ],
+          "x_packed": [
+            16,
+            1,
+            240,
+            15
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              1,
+              3
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              0,
+              4
+            ],
+            [
+              2,
+              -1
+            ]
+          ],
+          "expected_result_bytes": [
+            19,
+            34,
+            4,
+            47
+          ],
+          "index": 3,
+          "observed_result_bytes": [
+            19,
+            34,
+            4,
+            47
+          ],
+          "x": [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              -1,
+              2
+            ],
+            [
+              2,
+              -1
+            ]
+          ],
+          "x_packed": [
+            18,
+            33,
+            242,
+            47
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              3,
+              0
+            ],
+            [
+              0,
+              6
+            ],
+            [
+              -3,
+              0
+            ],
+            [
+              0,
+              -6
+            ]
+          ],
+          "expected_result_bytes": [
+            48,
+            6,
+            208,
+            10
+          ],
+          "index": 4,
+          "observed_result_bytes": [
+            48,
+            6,
+            208,
+            10
+          ],
+          "x": [
+            [
+              3,
+              0
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              -3,
+              0
+            ],
+            [
+              0,
+              -3
+            ]
+          ],
+          "x_packed": [
+            48,
+            3,
+            208,
+            13
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              7,
+              7
+            ],
+            [
+              -8,
+              -8
+            ],
+            [
+              7,
+              -8
+            ],
+            [
+              -8,
+              7
+            ]
+          ],
+          "expected_result_bytes": [
+            119,
+            136,
+            120,
+            135
+          ],
+          "index": 5,
+          "observed_result_bytes": [
+            119,
+            136,
+            120,
+            135
+          ],
+          "x": [
+            [
+              7,
+              7
+            ],
+            [
+              -8,
+              -8
+            ],
+            [
+              7,
+              -8
+            ],
+            [
+              -8,
+              7
+            ]
+          ],
+          "x_packed": [
+            119,
+            136,
+            120,
+            135
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              -8,
+              7
+            ],
+            [
+              7,
+              -8
+            ],
+            [
+              7,
+              -8
+            ],
+            [
+              -4,
+              -8
+            ]
+          ],
+          "expected_result_bytes": [
+            135,
+            120,
+            120,
+            200
+          ],
+          "index": 6,
+          "observed_result_bytes": [
+            135,
+            120,
+            120,
+            200
+          ],
+          "x": [
+            [
+              -8,
+              7
+            ],
+            [
+              7,
+              -8
+            ],
+            [
+              3,
+              -2
+            ],
+            [
+              -4,
+              -5
+            ]
+          ],
+          "x_packed": [
+            135,
+            120,
+            62,
+            203
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              3,
+              -5
+            ],
+            [
+              -1,
+              7
+            ],
+            [
+              5,
+              0
+            ],
+            [
+              -6,
+              2
+            ]
+          ],
+          "expected_result_bytes": [
+            59,
+            247,
+            80,
+            162
+          ],
+          "index": 7,
+          "observed_result_bytes": [
+            59,
+            247,
+            80,
+            162
+          ],
+          "x": [
+            [
+              2,
+              -3
+            ],
+            [
+              -1,
+              4
+            ],
+            [
+              5,
+              0
+            ],
+            [
+              -6,
+              1
+            ]
+          ],
+          "x_packed": [
+            45,
+            244,
+            80,
+            161
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              7,
+              0
+            ],
+            [
+              0,
+              7
+            ],
+            [
+              -8,
+              0
+            ],
+            [
+              0,
+              -8
+            ]
+          ],
+          "expected_result_bytes": [
+            112,
+            7,
+            128,
+            8
+          ],
+          "index": 8,
+          "observed_result_bytes": [
+            112,
+            7,
+            128,
+            8
+          ],
+          "x": [
+            [
+              7,
+              0
+            ],
+            [
+              0,
+              7
+            ],
+            [
+              -8,
+              0
+            ],
+            [
+              0,
+              -8
+            ]
+          ],
+          "x_packed": [
+            112,
+            7,
+            128,
+            8
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              4,
+              7
+            ],
+            [
+              4,
+              -8
+            ],
+            [
+              -4,
+              7
+            ],
+            [
+              -4,
+              -8
+            ]
+          ],
+          "expected_result_bytes": [
+            71,
+            72,
+            199,
+            200
+          ],
+          "index": 9,
+          "observed_result_bytes": [
+            71,
+            72,
+            199,
+            200
+          ],
+          "x": [
+            [
+              4,
+              4
+            ],
+            [
+              4,
+              -4
+            ],
+            [
+              -4,
+              4
+            ],
+            [
+              -4,
+              -4
+            ]
+          ],
+          "x_packed": [
+            68,
+            76,
+            196,
+            204
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              2
+            ]
+          ],
+          "expected_result_bytes": [
+            18,
+            18,
+            18,
+            18
+          ],
+          "index": 10,
+          "observed_result_bytes": [
+            18,
+            18,
+            18,
+            18
+          ],
+          "x": [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "x_packed": [
+            17,
+            17,
+            17,
+            17
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              2,
+              4
+            ],
+            [
+              -2,
+              -4
+            ],
+            [
+              2,
+              -4
+            ],
+            [
+              -2,
+              4
+            ]
+          ],
+          "expected_result_bytes": [
+            36,
+            236,
+            44,
+            228
+          ],
+          "index": 11,
+          "observed_result_bytes": [
+            36,
+            236,
+            44,
+            228
+          ],
+          "x": [
+            [
+              2,
+              2
+            ],
+            [
+              -2,
+              -2
+            ],
+            [
+              2,
+              -2
+            ],
+            [
+              -2,
+              2
+            ]
+          ],
+          "x_packed": [
+            34,
+            238,
+            46,
+            226
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              6,
+              -2
+            ],
+            [
+              -4,
+              6
+            ],
+            [
+              3,
+              -8
+            ],
+            [
+              -4,
+              7
+            ]
+          ],
+          "expected_result_bytes": [
+            110,
+            198,
+            56,
+            199
+          ],
+          "index": 12,
+          "observed_result_bytes": [
+            110,
+            198,
+            56,
+            199
+          ],
+          "x": [
+            [
+              6,
+              -1
+            ],
+            [
+              -5,
+              2
+            ],
+            [
+              3,
+              -7
+            ],
+            [
+              -4,
+              5
+            ]
+          ],
+          "x_packed": [
+            111,
+            178,
+            57,
+            197
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              0,
+              7
+            ],
+            [
+              7,
+              0
+            ],
+            [
+              0,
+              -8
+            ],
+            [
+              -8,
+              0
+            ]
+          ],
+          "expected_result_bytes": [
+            7,
+            112,
+            8,
+            128
+          ],
+          "index": 13,
+          "observed_result_bytes": [
+            7,
+            112,
+            8,
+            128
+          ],
+          "x": [
+            [
+              0,
+              7
+            ],
+            [
+              7,
+              0
+            ],
+            [
+              0,
+              -8
+            ],
+            [
+              -8,
+              0
+            ]
+          ],
+          "x_packed": [
+            7,
+            112,
+            8,
+            128
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              5,
+              2
+            ],
+            [
+              1,
+              7
+            ],
+            [
+              -5,
+              -2
+            ],
+            [
+              -1,
+              -8
+            ]
+          ],
+          "expected_result_bytes": [
+            82,
+            23,
+            190,
+            248
+          ],
+          "index": 14,
+          "observed_result_bytes": [
+            82,
+            23,
+            190,
+            248
+          ],
+          "x": [
+            [
+              5,
+              1
+            ],
+            [
+              1,
+              5
+            ],
+            [
+              -5,
+              -1
+            ],
+            [
+              -1,
+              -5
+            ]
+          ],
+          "x_packed": [
+            81,
+            21,
+            191,
+            251
+          ]
+        },
+        {
+          "expected_output": [
+            [
+              7,
+              -8
+            ],
+            [
+              -7,
+              7
+            ],
+            [
+              7,
+              -8
+            ],
+            [
+              -7,
+              7
+            ]
+          ],
+          "expected_result_bytes": [
+            120,
+            151,
+            120,
+            151
+          ],
+          "index": 15,
+          "observed_result_bytes": [
+            120,
+            151,
+            120,
+            151
+          ],
+          "x": [
+            [
+              7,
+              -7
+            ],
+            [
+              -7,
+              7
+            ],
+            [
+              6,
+              -6
+            ],
+            [
+              -6,
+              6
+            ]
+          ],
+          "x_packed": [
+            121,
+            151,
+            106,
+            166
+          ]
+        }
+      ]
+    }
+  },
+  "non_dominated_variants": [
+    "mac1",
+    "mac2",
+    "mac4"
+  ],
+  "points": [
+    {
+      "active_total_power_w": 0.0003544384381,
+      "common_power_context": {
+        "corner": "nom_tt_025C_1v80",
+        "pdk_artifacts": {
+          "cell_lef_ef": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_ef_sc_hd.lef",
+          "cell_lef_hd": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+          "liberty": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+          "tech_lef": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__nom.tlef"
+        },
+        "tool": {
+          "container_image": "ghcr.io/librelane/librelane@sha256:25e8d8a54dd9587132971f3061dfdbbab7b4c4d07a454a62d623543d862d3abb",
+          "librelane_version": "3.0.3",
+          "openroad_command": "openroad -exit -no_splash power.tcl",
+          "report_power_digits": 9
+        }
+      },
+      "compute_cycles": {
+        "max": 148,
+        "mean": 148.0,
+        "min": 148
+      },
+      "core_area_um2": 72564.6,
+      "die_area_um2": 75602.5,
+      "dominated_by": [],
+      "energy_per_attention_nj": 5.63557116579,
+      "idle_subtracted_incremental_energy_per_attention_nj": 0.8359271167500005,
+      "idle_total_power_w": 0.0003018644056,
+      "lane_utilization": 0.7567567567567568,
+      "lvs_status": "pass",
+      "mac_lanes": 1,
+      "magic_drc_status": "pass",
+      "max_cap_violation_count": 0,
+      "max_slew_violation_count": 1171,
+      "non_dominated": true,
+      "phase_cycles": {
+        "clip": 16,
+        "max": 16,
+        "norm": 4,
+        "project": 48,
+        "score": 32,
+        "weight": 32
+      },
+      "physical_experiment": {
+        "flow": {
+          "librelane_version": "3.0.3",
+          "pdk_revision": "8afc8346a57fe1ab7934ba5a6056ea8b43078e71",
+          "run_directory": "runs/mac1"
+        },
+        "resolved_config": {
+          "clock_period_ns": 100,
+          "design_name": "tt_um_madhavkarnati_toy_tpu",
+          "die_area_um": [
+            0,
+            0,
+            334.88,
+            225.76
+          ],
+          "pdk": "sky130A",
+          "rtl_sources": [
+            "src/dual_int4_mac.v",
+            "src/toy_attention_core.v",
+            "src/project.v"
+          ],
+          "standard_cell_library": "sky130_fd_sc_hd",
+          "synth_parameters": [
+            "MAC_LANES=1"
+          ],
+          "tile_allocation": "2x2"
+        },
+        "source_provenance": {
+          "base_git_commit": "46b07d9e68bbc50f038890e1ea2d1e59b3922281",
+          "branch": "milestone-2-mac-pareto",
+          "changed_rtl_files": [],
+          "rtl_files": [
+            "src/dual_int4_mac.v",
+            "src/toy_attention_core.v",
+            "src/project.v"
+          ],
+          "worktree_state": "clean"
+        }
+      },
+      "placement_utilization": 0.644355,
+      "routing_drc_status": "pass",
+      "single_transaction_latency_cycles": 158.0,
+      "standard_cell_area_um2": 46757.3,
+      "standard_cell_count": 5065,
+      "steady_state_initiation_interval_cycles": 159.0,
+      "throughput_attentions_per_second": 62893.08176100629,
+      "timing_corner_count": 9,
+      "timing_status": "pass",
+      "useful_mac_operations": 112,
+      "variant": "mac1",
+      "workload": {
+        "identity": "warm_attention",
+        "measurement_boundary": {
+          "compute": "RUN_ATTENTION acceptance through done assertion",
+          "host": "always ready, no intentional stalls",
+          "latency": "LOAD_X command acceptance through fourth result-byte handshake",
+          "vcd": "first LOAD_X acceptance through one full clock period after the final result-byte handshake"
+        },
+        "resident_weights_packed": {
+          "wk": [
+            16,
+            1
+          ],
+          "wq": [
+            16,
+            1
+          ],
+          "wv": [
+            16,
+            2
+          ]
+        },
+        "transaction_count": 16,
+        "transactions": [
+          {
+            "expected_output": [
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                2
+              ]
+            ],
+            "expected_result_bytes": [
+              1,
+              2,
+              1,
+              2
+            ],
+            "index": 0,
+            "observed_result_bytes": [
+              1,
+              2,
+              1,
+              2
+            ],
+            "x": [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                -1,
+                1
+              ]
+            ],
+            "x_packed": [
+              16,
+              1,
+              17,
+              241
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "expected_result_bytes": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "index": 1,
+            "observed_result_bytes": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "x": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "x_packed": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "expected_result_bytes": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "index": 2,
+            "observed_result_bytes": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "x": [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                -1,
+                0
+              ],
+              [
+                0,
+                -1
+              ]
+            ],
+            "x_packed": [
+              16,
+              1,
+              240,
+              15
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                1,
+                3
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                2,
+                -1
+              ]
+            ],
+            "expected_result_bytes": [
+              19,
+              34,
+              4,
+              47
+            ],
+            "index": 3,
+            "observed_result_bytes": [
+              19,
+              34,
+              4,
+              47
+            ],
+            "x": [
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                -1,
+                2
+              ],
+              [
+                2,
+                -1
+              ]
+            ],
+            "x_packed": [
+              18,
+              33,
+              242,
+              47
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                3,
+                0
+              ],
+              [
+                0,
+                6
+              ],
+              [
+                -3,
+                0
+              ],
+              [
+                0,
+                -6
+              ]
+            ],
+            "expected_result_bytes": [
+              48,
+              6,
+              208,
+              10
+            ],
+            "index": 4,
+            "observed_result_bytes": [
+              48,
+              6,
+              208,
+              10
+            ],
+            "x": [
+              [
+                3,
+                0
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                -3,
+                0
+              ],
+              [
+                0,
+                -3
+              ]
+            ],
+            "x_packed": [
+              48,
+              3,
+              208,
+              13
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                7,
+                7
+              ],
+              [
+                -8,
+                -8
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                -8,
+                7
+              ]
+            ],
+            "expected_result_bytes": [
+              119,
+              136,
+              120,
+              135
+            ],
+            "index": 5,
+            "observed_result_bytes": [
+              119,
+              136,
+              120,
+              135
+            ],
+            "x": [
+              [
+                7,
+                7
+              ],
+              [
+                -8,
+                -8
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                -8,
+                7
+              ]
+            ],
+            "x_packed": [
+              119,
+              136,
+              120,
+              135
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                -8,
+                7
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                -4,
+                -8
+              ]
+            ],
+            "expected_result_bytes": [
+              135,
+              120,
+              120,
+              200
+            ],
+            "index": 6,
+            "observed_result_bytes": [
+              135,
+              120,
+              120,
+              200
+            ],
+            "x": [
+              [
+                -8,
+                7
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                3,
+                -2
+              ],
+              [
+                -4,
+                -5
+              ]
+            ],
+            "x_packed": [
+              135,
+              120,
+              62,
+              203
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                3,
+                -5
+              ],
+              [
+                -1,
+                7
+              ],
+              [
+                5,
+                0
+              ],
+              [
+                -6,
+                2
+              ]
+            ],
+            "expected_result_bytes": [
+              59,
+              247,
+              80,
+              162
+            ],
+            "index": 7,
+            "observed_result_bytes": [
+              59,
+              247,
+              80,
+              162
+            ],
+            "x": [
+              [
+                2,
+                -3
+              ],
+              [
+                -1,
+                4
+              ],
+              [
+                5,
+                0
+              ],
+              [
+                -6,
+                1
+              ]
+            ],
+            "x_packed": [
+              45,
+              244,
+              80,
+              161
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                7,
+                0
+              ],
+              [
+                0,
+                7
+              ],
+              [
+                -8,
+                0
+              ],
+              [
+                0,
+                -8
+              ]
+            ],
+            "expected_result_bytes": [
+              112,
+              7,
+              128,
+              8
+            ],
+            "index": 8,
+            "observed_result_bytes": [
+              112,
+              7,
+              128,
+              8
+            ],
+            "x": [
+              [
+                7,
+                0
+              ],
+              [
+                0,
+                7
+              ],
+              [
+                -8,
+                0
+              ],
+              [
+                0,
+                -8
+              ]
+            ],
+            "x_packed": [
+              112,
+              7,
+              128,
+              8
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                4,
+                7
+              ],
+              [
+                4,
+                -8
+              ],
+              [
+                -4,
+                7
+              ],
+              [
+                -4,
+                -8
+              ]
+            ],
+            "expected_result_bytes": [
+              71,
+              72,
+              199,
+              200
+            ],
+            "index": 9,
+            "observed_result_bytes": [
+              71,
+              72,
+              199,
+              200
+            ],
+            "x": [
+              [
+                4,
+                4
+              ],
+              [
+                4,
+                -4
+              ],
+              [
+                -4,
+                4
+              ],
+              [
+                -4,
+                -4
+              ]
+            ],
+            "x_packed": [
+              68,
+              76,
+              196,
+              204
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "expected_result_bytes": [
+              18,
+              18,
+              18,
+              18
+            ],
+            "index": 10,
+            "observed_result_bytes": [
+              18,
+              18,
+              18,
+              18
+            ],
+            "x": [
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "x_packed": [
+              17,
+              17,
+              17,
+              17
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                2,
+                4
+              ],
+              [
+                -2,
+                -4
+              ],
+              [
+                2,
+                -4
+              ],
+              [
+                -2,
+                4
+              ]
+            ],
+            "expected_result_bytes": [
+              36,
+              236,
+              44,
+              228
+            ],
+            "index": 11,
+            "observed_result_bytes": [
+              36,
+              236,
+              44,
+              228
+            ],
+            "x": [
+              [
+                2,
+                2
+              ],
+              [
+                -2,
+                -2
+              ],
+              [
+                2,
+                -2
+              ],
+              [
+                -2,
+                2
+              ]
+            ],
+            "x_packed": [
+              34,
+              238,
+              46,
+              226
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                6,
+                -2
+              ],
+              [
+                -4,
+                6
+              ],
+              [
+                3,
+                -8
+              ],
+              [
+                -4,
+                7
+              ]
+            ],
+            "expected_result_bytes": [
+              110,
+              198,
+              56,
+              199
+            ],
+            "index": 12,
+            "observed_result_bytes": [
+              110,
+              198,
+              56,
+              199
+            ],
+            "x": [
+              [
+                6,
+                -1
+              ],
+              [
+                -5,
+                2
+              ],
+              [
+                3,
+                -7
+              ],
+              [
+                -4,
+                5
+              ]
+            ],
+            "x_packed": [
+              111,
+              178,
+              57,
+              197
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                0,
+                7
+              ],
+              [
+                7,
+                0
+              ],
+              [
+                0,
+                -8
+              ],
+              [
+                -8,
+                0
+              ]
+            ],
+            "expected_result_bytes": [
+              7,
+              112,
+              8,
+              128
+            ],
+            "index": 13,
+            "observed_result_bytes": [
+              7,
+              112,
+              8,
+              128
+            ],
+            "x": [
+              [
+                0,
+                7
+              ],
+              [
+                7,
+                0
+              ],
+              [
+                0,
+                -8
+              ],
+              [
+                -8,
+                0
+              ]
+            ],
+            "x_packed": [
+              7,
+              112,
+              8,
+              128
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                5,
+                2
+              ],
+              [
+                1,
+                7
+              ],
+              [
+                -5,
+                -2
+              ],
+              [
+                -1,
+                -8
+              ]
+            ],
+            "expected_result_bytes": [
+              82,
+              23,
+              190,
+              248
+            ],
+            "index": 14,
+            "observed_result_bytes": [
+              82,
+              23,
+              190,
+              248
+            ],
+            "x": [
+              [
+                5,
+                1
+              ],
+              [
+                1,
+                5
+              ],
+              [
+                -5,
+                -1
+              ],
+              [
+                -1,
+                -5
+              ]
+            ],
+            "x_packed": [
+              81,
+              21,
+              191,
+              251
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                7,
+                -8
+              ],
+              [
+                -7,
+                7
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                -7,
+                7
+              ]
+            ],
+            "expected_result_bytes": [
+              120,
+              151,
+              120,
+              151
+            ],
+            "index": 15,
+            "observed_result_bytes": [
+              120,
+              151,
+              120,
+              151
+            ],
+            "x": [
+              [
+                7,
+                -7
+              ],
+              [
+                -7,
+                7
+              ],
+              [
+                6,
+                -6
+              ],
+              [
+                -6,
+                6
+              ]
+            ],
+            "x_packed": [
+              121,
+              151,
+              106,
+              166
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "active_total_power_w": 0.0003829204943,
+      "common_power_context": {
+        "corner": "nom_tt_025C_1v80",
+        "pdk_artifacts": {
+          "cell_lef_ef": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_ef_sc_hd.lef",
+          "cell_lef_hd": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+          "liberty": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+          "tech_lef": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__nom.tlef"
+        },
+        "tool": {
+          "container_image": "ghcr.io/librelane/librelane@sha256:25e8d8a54dd9587132971f3061dfdbbab7b4c4d07a454a62d623543d862d3abb",
+          "librelane_version": "3.0.3",
+          "openroad_command": "openroad -exit -no_splash power.tcl",
+          "report_power_digits": 9
+        }
+      },
+      "compute_cycles": {
+        "max": 108,
+        "mean": 108.0,
+        "min": 108
+      },
+      "core_area_um2": 72564.6,
+      "die_area_um2": 75602.5,
+      "dominated_by": [],
+      "energy_per_attention_nj": 4.556753882170001,
+      "idle_subtracted_incremental_energy_per_attention_nj": 0.80741318287,
+      "idle_total_power_w": 0.000315070647,
+      "lane_utilization": 0.5185185185185185,
+      "lvs_status": "pass",
+      "mac_lanes": 2,
+      "magic_drc_status": "pass",
+      "max_cap_violation_count": 1,
+      "max_slew_violation_count": 1301,
+      "non_dominated": true,
+      "phase_cycles": {
+        "clip": 16,
+        "max": 16,
+        "norm": 4,
+        "project": 24,
+        "score": 32,
+        "weight": 16
+      },
+      "physical_experiment": {
+        "flow": {
+          "librelane_version": "3.0.3",
+          "pdk_revision": "8afc8346a57fe1ab7934ba5a6056ea8b43078e71",
+          "run_directory": "runs/mac2"
+        },
+        "resolved_config": {
+          "clock_period_ns": 100,
+          "design_name": "tt_um_madhavkarnati_toy_tpu",
+          "die_area_um": [
+            0,
+            0,
+            334.88,
+            225.76
+          ],
+          "pdk": "sky130A",
+          "rtl_sources": [
+            "src/dual_int4_mac.v",
+            "src/toy_attention_core.v",
+            "src/project.v"
+          ],
+          "standard_cell_library": "sky130_fd_sc_hd",
+          "synth_parameters": [
+            "MAC_LANES=2"
+          ],
+          "tile_allocation": "2x2"
+        },
+        "source_provenance": {
+          "base_git_commit": "46b07d9e68bbc50f038890e1ea2d1e59b3922281",
+          "branch": "milestone-2-mac-pareto",
+          "changed_rtl_files": [],
+          "rtl_files": [
+            "src/dual_int4_mac.v",
+            "src/toy_attention_core.v",
+            "src/project.v"
+          ],
+          "worktree_state": "clean"
+        }
+      },
+      "placement_utilization": 0.680995,
+      "routing_drc_status": "pass",
+      "single_transaction_latency_cycles": 118.0,
+      "standard_cell_area_um2": 49416.1,
+      "standard_cell_count": 5395,
+      "steady_state_initiation_interval_cycles": 119.0,
+      "throughput_attentions_per_second": 84033.61344537816,
+      "timing_corner_count": 9,
+      "timing_status": "pass",
+      "useful_mac_operations": 112,
+      "variant": "mac2",
+      "workload": {
+        "identity": "warm_attention",
+        "measurement_boundary": {
+          "compute": "RUN_ATTENTION acceptance through done assertion",
+          "host": "always ready, no intentional stalls",
+          "latency": "LOAD_X command acceptance through fourth result-byte handshake",
+          "vcd": "first LOAD_X acceptance through one full clock period after the final result-byte handshake"
+        },
+        "resident_weights_packed": {
+          "wk": [
+            16,
+            1
+          ],
+          "wq": [
+            16,
+            1
+          ],
+          "wv": [
+            16,
+            2
+          ]
+        },
+        "transaction_count": 16,
+        "transactions": [
+          {
+            "expected_output": [
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                2
+              ]
+            ],
+            "expected_result_bytes": [
+              1,
+              2,
+              1,
+              2
+            ],
+            "index": 0,
+            "observed_result_bytes": [
+              1,
+              2,
+              1,
+              2
+            ],
+            "x": [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                -1,
+                1
+              ]
+            ],
+            "x_packed": [
+              16,
+              1,
+              17,
+              241
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "expected_result_bytes": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "index": 1,
+            "observed_result_bytes": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "x": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "x_packed": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "expected_result_bytes": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "index": 2,
+            "observed_result_bytes": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "x": [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                -1,
+                0
+              ],
+              [
+                0,
+                -1
+              ]
+            ],
+            "x_packed": [
+              16,
+              1,
+              240,
+              15
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                1,
+                3
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                2,
+                -1
+              ]
+            ],
+            "expected_result_bytes": [
+              19,
+              34,
+              4,
+              47
+            ],
+            "index": 3,
+            "observed_result_bytes": [
+              19,
+              34,
+              4,
+              47
+            ],
+            "x": [
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                -1,
+                2
+              ],
+              [
+                2,
+                -1
+              ]
+            ],
+            "x_packed": [
+              18,
+              33,
+              242,
+              47
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                3,
+                0
+              ],
+              [
+                0,
+                6
+              ],
+              [
+                -3,
+                0
+              ],
+              [
+                0,
+                -6
+              ]
+            ],
+            "expected_result_bytes": [
+              48,
+              6,
+              208,
+              10
+            ],
+            "index": 4,
+            "observed_result_bytes": [
+              48,
+              6,
+              208,
+              10
+            ],
+            "x": [
+              [
+                3,
+                0
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                -3,
+                0
+              ],
+              [
+                0,
+                -3
+              ]
+            ],
+            "x_packed": [
+              48,
+              3,
+              208,
+              13
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                7,
+                7
+              ],
+              [
+                -8,
+                -8
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                -8,
+                7
+              ]
+            ],
+            "expected_result_bytes": [
+              119,
+              136,
+              120,
+              135
+            ],
+            "index": 5,
+            "observed_result_bytes": [
+              119,
+              136,
+              120,
+              135
+            ],
+            "x": [
+              [
+                7,
+                7
+              ],
+              [
+                -8,
+                -8
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                -8,
+                7
+              ]
+            ],
+            "x_packed": [
+              119,
+              136,
+              120,
+              135
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                -8,
+                7
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                -4,
+                -8
+              ]
+            ],
+            "expected_result_bytes": [
+              135,
+              120,
+              120,
+              200
+            ],
+            "index": 6,
+            "observed_result_bytes": [
+              135,
+              120,
+              120,
+              200
+            ],
+            "x": [
+              [
+                -8,
+                7
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                3,
+                -2
+              ],
+              [
+                -4,
+                -5
+              ]
+            ],
+            "x_packed": [
+              135,
+              120,
+              62,
+              203
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                3,
+                -5
+              ],
+              [
+                -1,
+                7
+              ],
+              [
+                5,
+                0
+              ],
+              [
+                -6,
+                2
+              ]
+            ],
+            "expected_result_bytes": [
+              59,
+              247,
+              80,
+              162
+            ],
+            "index": 7,
+            "observed_result_bytes": [
+              59,
+              247,
+              80,
+              162
+            ],
+            "x": [
+              [
+                2,
+                -3
+              ],
+              [
+                -1,
+                4
+              ],
+              [
+                5,
+                0
+              ],
+              [
+                -6,
+                1
+              ]
+            ],
+            "x_packed": [
+              45,
+              244,
+              80,
+              161
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                7,
+                0
+              ],
+              [
+                0,
+                7
+              ],
+              [
+                -8,
+                0
+              ],
+              [
+                0,
+                -8
+              ]
+            ],
+            "expected_result_bytes": [
+              112,
+              7,
+              128,
+              8
+            ],
+            "index": 8,
+            "observed_result_bytes": [
+              112,
+              7,
+              128,
+              8
+            ],
+            "x": [
+              [
+                7,
+                0
+              ],
+              [
+                0,
+                7
+              ],
+              [
+                -8,
+                0
+              ],
+              [
+                0,
+                -8
+              ]
+            ],
+            "x_packed": [
+              112,
+              7,
+              128,
+              8
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                4,
+                7
+              ],
+              [
+                4,
+                -8
+              ],
+              [
+                -4,
+                7
+              ],
+              [
+                -4,
+                -8
+              ]
+            ],
+            "expected_result_bytes": [
+              71,
+              72,
+              199,
+              200
+            ],
+            "index": 9,
+            "observed_result_bytes": [
+              71,
+              72,
+              199,
+              200
+            ],
+            "x": [
+              [
+                4,
+                4
+              ],
+              [
+                4,
+                -4
+              ],
+              [
+                -4,
+                4
+              ],
+              [
+                -4,
+                -4
+              ]
+            ],
+            "x_packed": [
+              68,
+              76,
+              196,
+              204
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "expected_result_bytes": [
+              18,
+              18,
+              18,
+              18
+            ],
+            "index": 10,
+            "observed_result_bytes": [
+              18,
+              18,
+              18,
+              18
+            ],
+            "x": [
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "x_packed": [
+              17,
+              17,
+              17,
+              17
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                2,
+                4
+              ],
+              [
+                -2,
+                -4
+              ],
+              [
+                2,
+                -4
+              ],
+              [
+                -2,
+                4
+              ]
+            ],
+            "expected_result_bytes": [
+              36,
+              236,
+              44,
+              228
+            ],
+            "index": 11,
+            "observed_result_bytes": [
+              36,
+              236,
+              44,
+              228
+            ],
+            "x": [
+              [
+                2,
+                2
+              ],
+              [
+                -2,
+                -2
+              ],
+              [
+                2,
+                -2
+              ],
+              [
+                -2,
+                2
+              ]
+            ],
+            "x_packed": [
+              34,
+              238,
+              46,
+              226
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                6,
+                -2
+              ],
+              [
+                -4,
+                6
+              ],
+              [
+                3,
+                -8
+              ],
+              [
+                -4,
+                7
+              ]
+            ],
+            "expected_result_bytes": [
+              110,
+              198,
+              56,
+              199
+            ],
+            "index": 12,
+            "observed_result_bytes": [
+              110,
+              198,
+              56,
+              199
+            ],
+            "x": [
+              [
+                6,
+                -1
+              ],
+              [
+                -5,
+                2
+              ],
+              [
+                3,
+                -7
+              ],
+              [
+                -4,
+                5
+              ]
+            ],
+            "x_packed": [
+              111,
+              178,
+              57,
+              197
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                0,
+                7
+              ],
+              [
+                7,
+                0
+              ],
+              [
+                0,
+                -8
+              ],
+              [
+                -8,
+                0
+              ]
+            ],
+            "expected_result_bytes": [
+              7,
+              112,
+              8,
+              128
+            ],
+            "index": 13,
+            "observed_result_bytes": [
+              7,
+              112,
+              8,
+              128
+            ],
+            "x": [
+              [
+                0,
+                7
+              ],
+              [
+                7,
+                0
+              ],
+              [
+                0,
+                -8
+              ],
+              [
+                -8,
+                0
+              ]
+            ],
+            "x_packed": [
+              7,
+              112,
+              8,
+              128
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                5,
+                2
+              ],
+              [
+                1,
+                7
+              ],
+              [
+                -5,
+                -2
+              ],
+              [
+                -1,
+                -8
+              ]
+            ],
+            "expected_result_bytes": [
+              82,
+              23,
+              190,
+              248
+            ],
+            "index": 14,
+            "observed_result_bytes": [
+              82,
+              23,
+              190,
+              248
+            ],
+            "x": [
+              [
+                5,
+                1
+              ],
+              [
+                1,
+                5
+              ],
+              [
+                -5,
+                -1
+              ],
+              [
+                -1,
+                -5
+              ]
+            ],
+            "x_packed": [
+              81,
+              21,
+              191,
+              251
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                7,
+                -8
+              ],
+              [
+                -7,
+                7
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                -7,
+                7
+              ]
+            ],
+            "expected_result_bytes": [
+              120,
+              151,
+              120,
+              151
+            ],
+            "index": 15,
+            "observed_result_bytes": [
+              120,
+              151,
+              120,
+              151
+            ],
+            "x": [
+              [
+                7,
+                -7
+              ],
+              [
+                -7,
+                7
+              ],
+              [
+                6,
+                -6
+              ],
+              [
+                -6,
+                6
+              ]
+            ],
+            "x_packed": [
+              121,
+              151,
+              106,
+              166
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "active_total_power_w": 0.0004298065905,
+      "common_power_context": {
+        "corner": "nom_tt_025C_1v80",
+        "pdk_artifacts": {
+          "cell_lef_ef": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_ef_sc_hd.lef",
+          "cell_lef_hd": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+          "liberty": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+          "tech_lef": ".tt-pdk/ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__nom.tlef"
+        },
+        "tool": {
+          "container_image": "ghcr.io/librelane/librelane@sha256:25e8d8a54dd9587132971f3061dfdbbab7b4c4d07a454a62d623543d862d3abb",
+          "librelane_version": "3.0.3",
+          "openroad_command": "openroad -exit -no_splash power.tcl",
+          "report_power_digits": 9
+        }
+      },
+      "compute_cycles": {
+        "max": 64,
+        "mean": 64.0,
+        "min": 64
+      },
+      "core_area_um2": 72564.6,
+      "die_area_um2": 75602.5,
+      "dominated_by": [],
+      "energy_per_attention_nj": 3.2235494287500006,
+      "idle_subtracted_incremental_energy_per_attention_nj": 0.7811536484999998,
+      "idle_total_power_w": 0.0003256527707,
+      "lane_utilization": 0.4375,
+      "lvs_status": "pass",
+      "mac_lanes": 4,
+      "magic_drc_status": "pass",
+      "max_cap_violation_count": 9,
+      "max_slew_violation_count": 1623,
+      "non_dominated": true,
+      "phase_cycles": {
+        "clip": 16,
+        "max": 16,
+        "norm": 4,
+        "project": 12,
+        "score": 8,
+        "weight": 8
+      },
+      "physical_experiment": {
+        "flow": {
+          "librelane_version": "3.0.3",
+          "pdk_revision": "8afc8346a57fe1ab7934ba5a6056ea8b43078e71",
+          "run_directory": "runs/mac4"
+        },
+        "resolved_config": {
+          "clock_period_ns": 100,
+          "design_name": "tt_um_madhavkarnati_toy_tpu",
+          "die_area_um": [
+            0,
+            0,
+            334.88,
+            225.76
+          ],
+          "pdk": "sky130A",
+          "rtl_sources": [
+            "src/dual_int4_mac.v",
+            "src/toy_attention_core.v",
+            "src/project.v"
+          ],
+          "standard_cell_library": "sky130_fd_sc_hd",
+          "synth_parameters": [
+            "MAC_LANES=4"
+          ],
+          "tile_allocation": "2x2"
+        },
+        "source_provenance": {
+          "base_git_commit": "46b07d9e68bbc50f038890e1ea2d1e59b3922281",
+          "branch": "milestone-2-mac-pareto",
+          "changed_rtl_files": [],
+          "rtl_files": [
+            "src/dual_int4_mac.v",
+            "src/toy_attention_core.v",
+            "src/project.v"
+          ],
+          "worktree_state": "clean"
+        }
+      },
+      "placement_utilization": 0.772622,
+      "routing_drc_status": "pass",
+      "single_transaction_latency_cycles": 74.0,
+      "standard_cell_area_um2": 56065.0,
+      "standard_cell_count": 6071,
+      "steady_state_initiation_interval_cycles": 75.0,
+      "throughput_attentions_per_second": 133333.33333333334,
+      "timing_corner_count": 9,
+      "timing_status": "pass",
+      "useful_mac_operations": 112,
+      "variant": "mac4",
+      "workload": {
+        "identity": "warm_attention",
+        "measurement_boundary": {
+          "compute": "RUN_ATTENTION acceptance through done assertion",
+          "host": "always ready, no intentional stalls",
+          "latency": "LOAD_X command acceptance through fourth result-byte handshake",
+          "vcd": "first LOAD_X acceptance through one full clock period after the final result-byte handshake"
+        },
+        "resident_weights_packed": {
+          "wk": [
+            16,
+            1
+          ],
+          "wq": [
+            16,
+            1
+          ],
+          "wv": [
+            16,
+            2
+          ]
+        },
+        "transaction_count": 16,
+        "transactions": [
+          {
+            "expected_output": [
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                2
+              ]
+            ],
+            "expected_result_bytes": [
+              1,
+              2,
+              1,
+              2
+            ],
+            "index": 0,
+            "observed_result_bytes": [
+              1,
+              2,
+              1,
+              2
+            ],
+            "x": [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                -1,
+                1
+              ]
+            ],
+            "x_packed": [
+              16,
+              1,
+              17,
+              241
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "expected_result_bytes": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "index": 1,
+            "observed_result_bytes": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "x": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "x_packed": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "expected_result_bytes": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "index": 2,
+            "observed_result_bytes": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "x": [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                -1,
+                0
+              ],
+              [
+                0,
+                -1
+              ]
+            ],
+            "x_packed": [
+              16,
+              1,
+              240,
+              15
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                1,
+                3
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                2,
+                -1
+              ]
+            ],
+            "expected_result_bytes": [
+              19,
+              34,
+              4,
+              47
+            ],
+            "index": 3,
+            "observed_result_bytes": [
+              19,
+              34,
+              4,
+              47
+            ],
+            "x": [
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                -1,
+                2
+              ],
+              [
+                2,
+                -1
+              ]
+            ],
+            "x_packed": [
+              18,
+              33,
+              242,
+              47
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                3,
+                0
+              ],
+              [
+                0,
+                6
+              ],
+              [
+                -3,
+                0
+              ],
+              [
+                0,
+                -6
+              ]
+            ],
+            "expected_result_bytes": [
+              48,
+              6,
+              208,
+              10
+            ],
+            "index": 4,
+            "observed_result_bytes": [
+              48,
+              6,
+              208,
+              10
+            ],
+            "x": [
+              [
+                3,
+                0
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                -3,
+                0
+              ],
+              [
+                0,
+                -3
+              ]
+            ],
+            "x_packed": [
+              48,
+              3,
+              208,
+              13
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                7,
+                7
+              ],
+              [
+                -8,
+                -8
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                -8,
+                7
+              ]
+            ],
+            "expected_result_bytes": [
+              119,
+              136,
+              120,
+              135
+            ],
+            "index": 5,
+            "observed_result_bytes": [
+              119,
+              136,
+              120,
+              135
+            ],
+            "x": [
+              [
+                7,
+                7
+              ],
+              [
+                -8,
+                -8
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                -8,
+                7
+              ]
+            ],
+            "x_packed": [
+              119,
+              136,
+              120,
+              135
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                -8,
+                7
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                -4,
+                -8
+              ]
+            ],
+            "expected_result_bytes": [
+              135,
+              120,
+              120,
+              200
+            ],
+            "index": 6,
+            "observed_result_bytes": [
+              135,
+              120,
+              120,
+              200
+            ],
+            "x": [
+              [
+                -8,
+                7
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                3,
+                -2
+              ],
+              [
+                -4,
+                -5
+              ]
+            ],
+            "x_packed": [
+              135,
+              120,
+              62,
+              203
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                3,
+                -5
+              ],
+              [
+                -1,
+                7
+              ],
+              [
+                5,
+                0
+              ],
+              [
+                -6,
+                2
+              ]
+            ],
+            "expected_result_bytes": [
+              59,
+              247,
+              80,
+              162
+            ],
+            "index": 7,
+            "observed_result_bytes": [
+              59,
+              247,
+              80,
+              162
+            ],
+            "x": [
+              [
+                2,
+                -3
+              ],
+              [
+                -1,
+                4
+              ],
+              [
+                5,
+                0
+              ],
+              [
+                -6,
+                1
+              ]
+            ],
+            "x_packed": [
+              45,
+              244,
+              80,
+              161
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                7,
+                0
+              ],
+              [
+                0,
+                7
+              ],
+              [
+                -8,
+                0
+              ],
+              [
+                0,
+                -8
+              ]
+            ],
+            "expected_result_bytes": [
+              112,
+              7,
+              128,
+              8
+            ],
+            "index": 8,
+            "observed_result_bytes": [
+              112,
+              7,
+              128,
+              8
+            ],
+            "x": [
+              [
+                7,
+                0
+              ],
+              [
+                0,
+                7
+              ],
+              [
+                -8,
+                0
+              ],
+              [
+                0,
+                -8
+              ]
+            ],
+            "x_packed": [
+              112,
+              7,
+              128,
+              8
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                4,
+                7
+              ],
+              [
+                4,
+                -8
+              ],
+              [
+                -4,
+                7
+              ],
+              [
+                -4,
+                -8
+              ]
+            ],
+            "expected_result_bytes": [
+              71,
+              72,
+              199,
+              200
+            ],
+            "index": 9,
+            "observed_result_bytes": [
+              71,
+              72,
+              199,
+              200
+            ],
+            "x": [
+              [
+                4,
+                4
+              ],
+              [
+                4,
+                -4
+              ],
+              [
+                -4,
+                4
+              ],
+              [
+                -4,
+                -4
+              ]
+            ],
+            "x_packed": [
+              68,
+              76,
+              196,
+              204
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "expected_result_bytes": [
+              18,
+              18,
+              18,
+              18
+            ],
+            "index": 10,
+            "observed_result_bytes": [
+              18,
+              18,
+              18,
+              18
+            ],
+            "x": [
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "x_packed": [
+              17,
+              17,
+              17,
+              17
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                2,
+                4
+              ],
+              [
+                -2,
+                -4
+              ],
+              [
+                2,
+                -4
+              ],
+              [
+                -2,
+                4
+              ]
+            ],
+            "expected_result_bytes": [
+              36,
+              236,
+              44,
+              228
+            ],
+            "index": 11,
+            "observed_result_bytes": [
+              36,
+              236,
+              44,
+              228
+            ],
+            "x": [
+              [
+                2,
+                2
+              ],
+              [
+                -2,
+                -2
+              ],
+              [
+                2,
+                -2
+              ],
+              [
+                -2,
+                2
+              ]
+            ],
+            "x_packed": [
+              34,
+              238,
+              46,
+              226
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                6,
+                -2
+              ],
+              [
+                -4,
+                6
+              ],
+              [
+                3,
+                -8
+              ],
+              [
+                -4,
+                7
+              ]
+            ],
+            "expected_result_bytes": [
+              110,
+              198,
+              56,
+              199
+            ],
+            "index": 12,
+            "observed_result_bytes": [
+              110,
+              198,
+              56,
+              199
+            ],
+            "x": [
+              [
+                6,
+                -1
+              ],
+              [
+                -5,
+                2
+              ],
+              [
+                3,
+                -7
+              ],
+              [
+                -4,
+                5
+              ]
+            ],
+            "x_packed": [
+              111,
+              178,
+              57,
+              197
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                0,
+                7
+              ],
+              [
+                7,
+                0
+              ],
+              [
+                0,
+                -8
+              ],
+              [
+                -8,
+                0
+              ]
+            ],
+            "expected_result_bytes": [
+              7,
+              112,
+              8,
+              128
+            ],
+            "index": 13,
+            "observed_result_bytes": [
+              7,
+              112,
+              8,
+              128
+            ],
+            "x": [
+              [
+                0,
+                7
+              ],
+              [
+                7,
+                0
+              ],
+              [
+                0,
+                -8
+              ],
+              [
+                -8,
+                0
+              ]
+            ],
+            "x_packed": [
+              7,
+              112,
+              8,
+              128
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                5,
+                2
+              ],
+              [
+                1,
+                7
+              ],
+              [
+                -5,
+                -2
+              ],
+              [
+                -1,
+                -8
+              ]
+            ],
+            "expected_result_bytes": [
+              82,
+              23,
+              190,
+              248
+            ],
+            "index": 14,
+            "observed_result_bytes": [
+              82,
+              23,
+              190,
+              248
+            ],
+            "x": [
+              [
+                5,
+                1
+              ],
+              [
+                1,
+                5
+              ],
+              [
+                -5,
+                -1
+              ],
+              [
+                -1,
+                -5
+              ]
+            ],
+            "x_packed": [
+              81,
+              21,
+              191,
+              251
+            ]
+          },
+          {
+            "expected_output": [
+              [
+                7,
+                -8
+              ],
+              [
+                -7,
+                7
+              ],
+              [
+                7,
+                -8
+              ],
+              [
+                -7,
+                7
+              ]
+            ],
+            "expected_result_bytes": [
+              120,
+              151,
+              120,
+              151
+            ],
+            "index": 15,
+            "observed_result_bytes": [
+              120,
+              151,
+              120,
+              151
+            ],
+            "x": [
+              [
+                7,
+                -7
+              ],
+              [
+                -7,
+                7
+              ],
+              [
+                6,
+                -6
+              ],
+              [
+                -6,
+                6
+              ]
+            ],
+            "x_packed": [
+              121,
+              151,
+              106,
+              166
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "schema_version": "1.0"
+}

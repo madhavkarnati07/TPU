@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "variant": "mac2",
+  "run_tag": "mac2",
+  "resolved_config": {
+    "design_name": "tt_um_madhavkarnati_toy_tpu",
+    "synth_parameters": [
+      "MAC_LANES=2"
+    ],
+    "die_area_um": [
+      0,
+      0,
+      334.88,
+      225.76
+    ],
+    "tile_allocation": "2x2",
+    "clock_period_ns": 100,
+    "pdk": "sky130A",
+    "standard_cell_library": "sky130_fd_sc_hd",
+    "rtl_sources": [
+      "src/dual_int4_mac.v",
+      "src/toy_attention_core.v",
+      "src/project.v"
+    ]
+  },
+  "metrics_binding": {
+    "standard_cell_area_um2": 49416.1,
+    "standard_cell_count": 5395,
+    "die_area_um2": 75602.5,
+    "core_area_um2": 72564.6
+  },
+  "source_provenance": {
+    "base_git_commit": "46b07d9e68bbc50f038890e1ea2d1e59b3922281",
+    "branch": "milestone-2-mac-pareto",
+    "worktree_state": "clean",
+    "changed_rtl_files": [],
+    "rtl_files": [
+      "src/dual_int4_mac.v",
+      "src/toy_attention_core.v",
+      "src/project.v"
+    ]
+  },
+  "flow": {
+    "librelane_version": "3.0.3",
+    "pdk_revision": "8afc8346a57fe1ab7934ba5a6056ea8b43078e71",
+    "run_directory": "runs/mac2"
+  }
+}
