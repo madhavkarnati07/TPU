@@ -1,4 +1,7 @@
-module toy_attention_core (
+module toy_attention_core #(
+    // Supported elaboration-time configurations are exactly 1, 2, and 4.
+    parameter integer MAC_LANES = 2
+) (
     input  wire       clk,
     input  wire       rst,
     input  wire       rx_valid,
@@ -76,11 +79,14 @@ module toy_attention_core (
     reg [1:0] projection_phase;
     reg [1:0] projection_token;
     reg       projection_k;
+    reg       projection_dim;
+    reg signed [3:0] projection_hi;
     reg [1:0] query_index;
     reg [1:0] key_index;
     reg       score_k;
     reg [1:0] scan_index;
     reg [1:0] weight_index;
+    reg       weight_dim;
 
     reg [3:0] tx_kind;
     reg [3:0] tx_index;
@@ -90,10 +96,18 @@ module toy_attention_core (
     reg signed [3:0] mac_b0;
     reg signed [3:0] mac_a1;
     reg signed [3:0] mac_b1;
+    reg signed [3:0] mac_a2;
+    reg signed [3:0] mac_b2;
+    reg signed [3:0] mac_a3;
+    reg signed [3:0] mac_b3;
     wire mac_enable;
     wire mac_clear;
     wire signed [15:0] mac_sum0;
     wire signed [15:0] mac_sum1;
+    wire signed [15:0] mac_sum2;
+    wire signed [15:0] mac_sum3;
+    wire signed [16:0] weight_partial0;
+    wire signed [16:0] weight_partial1;
 
     wire [2:0] current_weight;
     wire signed [7:0] reciprocal_signed;
@@ -180,87 +194,160 @@ module toy_attention_core (
     assign normalized_product1 = numerator1 * reciprocal_signed;
     assign rounded0 = round_q08(normalized_product0);
     assign rounded1 = round_q08(normalized_product1);
+    assign weight_partial0 = {mac_sum0[15], mac_sum0} + {mac_sum2[15], mac_sum2};
+    assign weight_partial1 = {mac_sum1[15], mac_sum1} + {mac_sum3[15], mac_sum3};
 
-    dual_int4_mac mac (
-        .clk(clk),
-        .enable(mac_enable),
-        .clear(mac_clear),
-        .a0(mac_a0),
-        .b0(mac_b0),
-        .a1(mac_a1),
-        .b1(mac_b1),
-        .sum0(mac_sum0),
-        .sum1(mac_sum1)
-    );
+    // Only the selected branch elaborates MAC state, making this a physical
+    // lane-count sweep rather than a single four-lane design with idle lanes.
+    generate
+        if (MAC_LANES == 1) begin : gen_one_mac
+            int4_mac mac0 (
+                .clk(clk), .enable(mac_enable), .clear(mac_clear),
+                .a0(mac_a0), .b0(mac_b0), .sum(mac_sum0)
+            );
+            assign mac_sum1 = 16'sd0;
+            assign mac_sum2 = 16'sd0;
+            assign mac_sum3 = 16'sd0;
+        end else if (MAC_LANES == 2) begin : gen_two_mac
+            dual_int4_mac mac (
+                .clk(clk), .enable(mac_enable), .clear(mac_clear),
+                .a0(mac_a0), .b0(mac_b0), .a1(mac_a1), .b1(mac_b1),
+                .sum0(mac_sum0), .sum1(mac_sum1)
+            );
+            assign mac_sum2 = 16'sd0;
+            assign mac_sum3 = 16'sd0;
+        end else if (MAC_LANES == 4) begin : gen_four_mac
+            int4_mac mac0 (
+                .clk(clk), .enable(mac_enable), .clear(mac_clear),
+                .a0(mac_a0), .b0(mac_b0), .sum(mac_sum0)
+            );
+            int4_mac mac1 (
+                .clk(clk), .enable(mac_enable), .clear(mac_clear),
+                .a0(mac_a1), .b0(mac_b1), .sum(mac_sum1)
+            );
+            int4_mac mac2 (
+                .clk(clk), .enable(mac_enable), .clear(mac_clear),
+                .a0(mac_a2), .b0(mac_b2), .sum(mac_sum2)
+            );
+            int4_mac mac3 (
+                .clk(clk), .enable(mac_enable), .clear(mac_clear),
+                .a0(mac_a3), .b0(mac_b3), .sum(mac_sum3)
+            );
+        end else begin : gen_unsupported_mac_lanes
+            // Unsupported settings intentionally elaborate no MAC hardware.
+            assign mac_sum0 = 16'sd0;
+            assign mac_sum1 = 16'sd0;
+            assign mac_sum2 = 16'sd0;
+            assign mac_sum3 = 16'sd0;
+        end
+    endgenerate
 
     always @* begin
         mac_a0 = 4'sd0;
         mac_b0 = 4'sd0;
         mac_a1 = 4'sd0;
         mac_b1 = 4'sd0;
+        mac_a2 = 4'sd0;
+        mac_b2 = 4'sd0;
+        mac_a3 = 4'sd0;
+        mac_b3 = 4'sd0;
 
         case (state)
             STATE_PROJECT: begin
-                if (projection_k == 1'b0) begin
-                    mac_a0 = x_mem[projection_token][7:4];
-                    mac_a1 = x_mem[projection_token][7:4];
+                if (MAC_LANES == 1) begin
+                    mac_a0 = projection_k ? x_mem[projection_token][3:0] :
+                                             x_mem[projection_token][7:4];
                     case (projection_phase)
-                        2'd0: begin
-                            mac_b0 = wq_mem[0][7:4];
-                            mac_b1 = wq_mem[0][3:0];
-                        end
-                        2'd1: begin
-                            mac_b0 = wk_mem[0][7:4];
-                            mac_b1 = wk_mem[0][3:0];
-                        end
-                        default: begin
-                            mac_b0 = wv_mem[0][7:4];
-                            mac_b1 = wv_mem[0][3:0];
-                        end
+                        2'd0: mac_b0 = projection_k ?
+                            (projection_dim ? wq_mem[1][3:0] : wq_mem[1][7:4]) :
+                            (projection_dim ? wq_mem[0][3:0] : wq_mem[0][7:4]);
+                        2'd1: mac_b0 = projection_k ?
+                            (projection_dim ? wk_mem[1][3:0] : wk_mem[1][7:4]) :
+                            (projection_dim ? wk_mem[0][3:0] : wk_mem[0][7:4]);
+                        default: mac_b0 = projection_k ?
+                            (projection_dim ? wv_mem[1][3:0] : wv_mem[1][7:4]) :
+                            (projection_dim ? wv_mem[0][3:0] : wv_mem[0][7:4]);
                     endcase
+                end else if (MAC_LANES == 2) begin
+                    if (projection_k == 1'b0) begin
+                        mac_a0 = x_mem[projection_token][7:4];
+                        mac_a1 = x_mem[projection_token][7:4];
+                        case (projection_phase)
+                            2'd0: begin mac_b0 = wq_mem[0][7:4]; mac_b1 = wq_mem[0][3:0]; end
+                            2'd1: begin mac_b0 = wk_mem[0][7:4]; mac_b1 = wk_mem[0][3:0]; end
+                            default: begin mac_b0 = wv_mem[0][7:4]; mac_b1 = wv_mem[0][3:0]; end
+                        endcase
+                    end else begin
+                        mac_a0 = x_mem[projection_token][3:0];
+                        mac_a1 = x_mem[projection_token][3:0];
+                        case (projection_phase)
+                            2'd0: begin mac_b0 = wq_mem[1][7:4]; mac_b1 = wq_mem[1][3:0]; end
+                            2'd1: begin mac_b0 = wk_mem[1][7:4]; mac_b1 = wk_mem[1][3:0]; end
+                            default: begin mac_b0 = wv_mem[1][7:4]; mac_b1 = wv_mem[1][3:0]; end
+                        endcase
+                    end
                 end else begin
-                    mac_a0 = x_mem[projection_token][3:0];
-                    mac_a1 = x_mem[projection_token][3:0];
+                    mac_a0 = projection_k ? x_mem[projection_token][3:0] : x_mem[projection_token][7:4];
+                    mac_a1 = mac_a0;
+                    mac_a2 = projection_k ? x_mem[projection_token + 1'b1][3:0] : x_mem[projection_token + 1'b1][7:4];
+                    mac_a3 = mac_a2;
                     case (projection_phase)
                         2'd0: begin
-                            mac_b0 = wq_mem[1][7:4];
-                            mac_b1 = wq_mem[1][3:0];
+                            mac_b0 = projection_k ? wq_mem[1][7:4] : wq_mem[0][7:4];
+                            mac_b1 = projection_k ? wq_mem[1][3:0] : wq_mem[0][3:0];
                         end
                         2'd1: begin
-                            mac_b0 = wk_mem[1][7:4];
-                            mac_b1 = wk_mem[1][3:0];
+                            mac_b0 = projection_k ? wk_mem[1][7:4] : wk_mem[0][7:4];
+                            mac_b1 = projection_k ? wk_mem[1][3:0] : wk_mem[0][3:0];
                         end
                         default: begin
-                            mac_b0 = wv_mem[1][7:4];
-                            mac_b1 = wv_mem[1][3:0];
+                            mac_b0 = projection_k ? wv_mem[1][7:4] : wv_mem[0][7:4];
+                            mac_b1 = projection_k ? wv_mem[1][3:0] : wv_mem[0][3:0];
                         end
                     endcase
+                    mac_b2 = mac_b0;
+                    mac_b3 = mac_b1;
                 end
             end
 
             STATE_SCORE: begin
-                if (score_k == 1'b0) begin
-                    mac_a0 = q_mem[query_index][7:4];
-                    mac_b0 = k_mem[key_index][7:4];
+                if (MAC_LANES == 4) begin
+                    mac_a0 = score_k ? q_mem[query_index][3:0] : q_mem[query_index][7:4];
+                    mac_a1 = mac_a0;
+                    mac_a2 = mac_a0;
+                    mac_a3 = mac_a0;
+                    mac_b0 = score_k ? k_mem[0][3:0] : k_mem[0][7:4];
+                    mac_b1 = score_k ? k_mem[1][3:0] : k_mem[1][7:4];
+                    mac_b2 = score_k ? k_mem[2][3:0] : k_mem[2][7:4];
+                    mac_b3 = score_k ? k_mem[3][3:0] : k_mem[3][7:4];
                 end else begin
-                    mac_a0 = q_mem[query_index][3:0];
-                    mac_b0 = k_mem[key_index][3:0];
+                    mac_a0 = score_k ? q_mem[query_index][3:0] : q_mem[query_index][7:4];
+                    mac_b0 = score_k ? k_mem[key_index][3:0] : k_mem[key_index][7:4];
                 end
             end
 
             STATE_WEIGHT: begin
-                mac_a0 = {1'b0, weight_mem[weight_index]};
-                mac_b0 = v_mem[weight_index][7:4];
-                mac_a1 = {1'b0, weight_mem[weight_index]};
-                mac_b1 = v_mem[weight_index][3:0];
+                if (MAC_LANES == 1) begin
+                    mac_a0 = {1'b0, weight_mem[weight_index]};
+                    mac_b0 = weight_dim ? v_mem[weight_index][3:0] : v_mem[weight_index][7:4];
+                end else if (MAC_LANES == 2) begin
+                    mac_a0 = {1'b0, weight_mem[weight_index]};
+                    mac_b0 = v_mem[weight_index][7:4];
+                    mac_a1 = {1'b0, weight_mem[weight_index]};
+                    mac_b1 = v_mem[weight_index][3:0];
+                end else begin
+                    mac_a0 = {1'b0, weight_mem[{weight_index[0], 1'b0}]};
+                    mac_b0 = v_mem[{weight_index[0], 1'b0}][7:4];
+                    mac_a1 = {1'b0, weight_mem[{weight_index[0], 1'b0}]};
+                    mac_b1 = v_mem[{weight_index[0], 1'b0}][3:0];
+                    mac_a2 = {1'b0, weight_mem[{weight_index[0], 1'b0} + 1'b1]};
+                    mac_b2 = v_mem[{weight_index[0], 1'b0} + 1'b1][7:4];
+                    mac_a3 = {1'b0, weight_mem[{weight_index[0], 1'b0} + 1'b1]};
+                    mac_b3 = v_mem[{weight_index[0], 1'b0} + 1'b1][3:0];
+                end
             end
 
-            default: begin
-                mac_a0 = 4'sd0;
-                mac_b0 = 4'sd0;
-                mac_a1 = 4'sd0;
-                mac_b1 = 4'sd0;
-            end
+            default: begin end
         endcase
     end
 
@@ -309,11 +396,14 @@ module toy_attention_core (
             projection_phase <= 2'd0;
             projection_token <= 2'd0;
             projection_k <= 1'b0;
+            projection_dim <= 1'b0;
+            projection_hi <= 4'sd0;
             query_index <= 2'd0;
             key_index <= 2'd0;
             score_k <= 1'b0;
             scan_index <= 2'd0;
             weight_index <= 2'd0;
+            weight_dim <= 1'b0;
             tx_kind <= TX_STATUS;
             tx_index <= 4'd0;
             tx_length <= 4'd0;
@@ -354,6 +444,7 @@ module toy_attention_core (
                                     projection_phase <= 2'd0;
                                     projection_token <= 2'd0;
                                     projection_k <= 1'b0;
+                                    projection_dim <= 1'b0;
                                     query_index <= 2'd0;
                                     state <= STATE_PROJECT;
                                 end else begin
@@ -411,34 +502,104 @@ module toy_attention_core (
                 end
 
                 STATE_PROJECT: begin
-                    if (projection_k == 1'b0) begin
-                        projection_k <= 1'b1;
-                    end else begin
-                        case (projection_phase)
-                            2'd0: q_mem[projection_token] <= {
-                                clamp_int4(mac_sum0), clamp_int4(mac_sum1)
-                            };
-                            2'd1: k_mem[projection_token] <= {
-                                clamp_int4(mac_sum0), clamp_int4(mac_sum1)
-                            };
-                            default: v_mem[projection_token] <= {
-                                clamp_int4(mac_sum0), clamp_int4(mac_sum1)
-                            };
-                        endcase
-                        projection_k <= 1'b0;
-
-                        if (projection_token == 2'd3) begin
-                            projection_token <= 2'd0;
-                            if (projection_phase == 2'd2) begin
-                                query_index <= 2'd0;
-                                key_index <= 2'd0;
-                                score_k <= 1'b0;
-                                state <= STATE_SCORE;
-                            end else begin
-                                projection_phase <= projection_phase + 1'b1;
-                            end
+                    if (MAC_LANES == 1) begin
+                        if (projection_k == 1'b0) begin
+                            projection_k <= 1'b1;
+                        end else if (projection_dim == 1'b0) begin
+                            projection_hi <= clamp_int4(mac_sum0);
+                            projection_dim <= 1'b1;
+                            projection_k <= 1'b0;
                         end else begin
-                            projection_token <= projection_token + 1'b1;
+                            case (projection_phase)
+                                2'd0: q_mem[projection_token] <= {
+                                    projection_hi, clamp_int4(mac_sum0)
+                                };
+                                2'd1: k_mem[projection_token] <= {
+                                    projection_hi, clamp_int4(mac_sum0)
+                                };
+                                default: v_mem[projection_token] <= {
+                                    projection_hi, clamp_int4(mac_sum0)
+                                };
+                            endcase
+                            projection_dim <= 1'b0;
+                            projection_k <= 1'b0;
+                            if (projection_token == 2'd3) begin
+                                projection_token <= 2'd0;
+                                if (projection_phase == 2'd2) begin
+                                    query_index <= 2'd0;
+                                    key_index <= 2'd0;
+                                    score_k <= 1'b0;
+                                    state <= STATE_SCORE;
+                                end else begin
+                                    projection_phase <= projection_phase + 1'b1;
+                                end
+                            end else begin
+                                projection_token <= projection_token + 1'b1;
+                            end
+                        end
+                    end else if (MAC_LANES == 2) begin
+                        if (projection_k == 1'b0) begin
+                            projection_k <= 1'b1;
+                        end else begin
+                            case (projection_phase)
+                                2'd0: q_mem[projection_token] <= {
+                                    clamp_int4(mac_sum0), clamp_int4(mac_sum1)
+                                };
+                                2'd1: k_mem[projection_token] <= {
+                                    clamp_int4(mac_sum0), clamp_int4(mac_sum1)
+                                };
+                                default: v_mem[projection_token] <= {
+                                    clamp_int4(mac_sum0), clamp_int4(mac_sum1)
+                                };
+                            endcase
+                            projection_k <= 1'b0;
+
+                            if (projection_token == 2'd3) begin
+                                projection_token <= 2'd0;
+                                if (projection_phase == 2'd2) begin
+                                    query_index <= 2'd0;
+                                    key_index <= 2'd0;
+                                    score_k <= 1'b0;
+                                    state <= STATE_SCORE;
+                                end else begin
+                                    projection_phase <= projection_phase + 1'b1;
+                                end
+                            end else begin
+                                projection_token <= projection_token + 1'b1;
+                            end
+                        end
+                    end else begin
+                        if (projection_k == 1'b0) begin
+                            projection_k <= 1'b1;
+                        end else begin
+                            case (projection_phase)
+                                2'd0: begin
+                                    q_mem[projection_token] <= {clamp_int4(mac_sum0), clamp_int4(mac_sum1)};
+                                    q_mem[projection_token + 1'b1] <= {clamp_int4(mac_sum2), clamp_int4(mac_sum3)};
+                                end
+                                2'd1: begin
+                                    k_mem[projection_token] <= {clamp_int4(mac_sum0), clamp_int4(mac_sum1)};
+                                    k_mem[projection_token + 1'b1] <= {clamp_int4(mac_sum2), clamp_int4(mac_sum3)};
+                                end
+                                default: begin
+                                    v_mem[projection_token] <= {clamp_int4(mac_sum0), clamp_int4(mac_sum1)};
+                                    v_mem[projection_token + 1'b1] <= {clamp_int4(mac_sum2), clamp_int4(mac_sum3)};
+                                end
+                            endcase
+                            projection_k <= 1'b0;
+                            if (projection_token == 2'd2) begin
+                                projection_token <= 2'd0;
+                                if (projection_phase == 2'd2) begin
+                                    query_index <= 2'd0;
+                                    key_index <= 2'd0;
+                                    score_k <= 1'b0;
+                                    state <= STATE_SCORE;
+                                end else begin
+                                    projection_phase <= projection_phase + 1'b1;
+                                end
+                            end else begin
+                                projection_token <= 2'd2;
+                            end
                         end
                     end
                 end
@@ -446,6 +607,14 @@ module toy_attention_core (
                 STATE_SCORE: begin
                     if (score_k == 1'b0) begin
                         score_k <= 1'b1;
+                    end else if (MAC_LANES == 4) begin
+                        score_mem[0] <= mac_sum0;
+                        score_mem[1] <= mac_sum1;
+                        score_mem[2] <= mac_sum2;
+                        score_mem[3] <= mac_sum3;
+                        score_k <= 1'b0;
+                        scan_index <= 2'd0;
+                        state <= STATE_MAX;
                     end else begin
                         score_mem[key_index] <= mac_sum0;
                         score_k <= 1'b0;
@@ -480,6 +649,7 @@ module toy_attention_core (
                     denominator <= denominator + {2'b00, current_weight};
                     if (scan_index == 2'd3) begin
                         weight_index <= 2'd0;
+                        weight_dim <= 1'b0;
                         state <= STATE_WEIGHT;
                     end else begin
                         scan_index <= scan_index + 1'b1;
@@ -487,12 +657,35 @@ module toy_attention_core (
                 end
 
                 STATE_WEIGHT: begin
-                    if (weight_index == 2'd3) begin
-                        numerator0 <= mac_sum0;
-                        numerator1 <= mac_sum1;
-                        state <= STATE_NORM;
+                    if (MAC_LANES == 1) begin
+                        if (weight_index == 2'd3) begin
+                            if (weight_dim == 1'b0) begin
+                                numerator0 <= mac_sum0;
+                                weight_index <= 2'd0;
+                                weight_dim <= 1'b1;
+                            end else begin
+                                numerator1 <= mac_sum0;
+                                state <= STATE_NORM;
+                            end
+                        end else begin
+                            weight_index <= weight_index + 1'b1;
+                        end
+                    end else if (MAC_LANES == 2) begin
+                        if (weight_index == 2'd3) begin
+                            numerator0 <= mac_sum0;
+                            numerator1 <= mac_sum1;
+                            state <= STATE_NORM;
+                        end else begin
+                            weight_index <= weight_index + 1'b1;
+                        end
                     end else begin
-                        weight_index <= weight_index + 1'b1;
+                        if (weight_index == 2'd1) begin
+                            numerator0 <= weight_partial0[15:0];
+                            numerator1 <= weight_partial1[15:0];
+                            state <= STATE_NORM;
+                        end else begin
+                            weight_index <= 2'd1;
+                        end
                     end
                 end
 

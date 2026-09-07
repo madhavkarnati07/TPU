@@ -1,0 +1,13 @@
+{
+  "DESIGN_NAME": "tt_um_madhavkarnati_toy_tpu",
+  "VERILOG_FILES": [
+    "dir::dual_int4_mac.v",
+    "dir::toy_attention_core.v",
+    "dir::project.v"
+  ],
+  "DIE_AREA": "0 0 334.88 225.76",
+  "FP_DEF_TEMPLATE": "dir::../tt/tech/sky130A/def/tt_block_2x2_pg.def",
+  "VDD_PIN": "VPWR",
+  "GND_PIN": "VGND",
+  "RT_MAX_LAYER": "met4"
+}

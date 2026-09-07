@@ -1,4 +1,6 @@
-module tt_um_madhavkarnati_toy_tpu (
+module tt_um_madhavkarnati_toy_tpu #(
+    parameter integer MAC_LANES = 2
+) (
     input  wire [7:0] ui_in,
     output wire [7:0] uo_out,
     input  wire [7:0] uio_in,
@@ -20,7 +22,9 @@ module tt_um_madhavkarnati_toy_tpu (
     assign uio_out = {done, busy, tx_valid, rx_ready, 4'b0000};
     assign uio_oe = 8'hf0;
 
-    toy_attention_core core (
+    toy_attention_core #(
+        .MAC_LANES(MAC_LANES)
+    ) core (
         .clk(clk),
         .rst(core_reset),
         .rx_valid(uio_in[0]),
