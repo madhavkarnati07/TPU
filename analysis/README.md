@@ -1,4 +1,12 @@
-# Milestone 1 Baseline
+# Analysis Pipeline
+
+Start with the [initial architecture study](INITIAL_REPORT.md). It summarizes
+the validated one-, two-, and four-MAC results and defines controlled slots for
+follow-on analysis. The generated
+[visual analysis](pareto/architecture-analysis.html) and
+[concise summary](pareto/SUMMARY.md) are derived from `pareto/pareto.json`.
+
+## Milestone 1 Baseline
 
 The tracked two-MAC baseline is `report/baseline_2mac.json`. It combines the
 fixed 16-transaction warm-attention workload, gate-level VCD power, and final

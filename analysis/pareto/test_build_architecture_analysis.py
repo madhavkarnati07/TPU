@@ -18,6 +18,7 @@ assert SPEC and SPEC.loader
 BUILD = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(BUILD)
 PARETO = Path(__file__).with_name("pareto.json")
+INITIAL_REPORT = Path(__file__).parents[1] / "INITIAL_REPORT.md"
 
 
 class ArchitectureAnalysisTests(unittest.TestCase):
@@ -53,6 +54,21 @@ class ArchitectureAnalysisTests(unittest.TestCase):
         self.assertIn("16-cycle schedule gap", document)
         self.assertIn("This is a hypothesis, not a measured design point", summary)
         self.assertIn("2.12x", summary)
+
+    def test_initial_report_tracks_current_results_and_extension_slots(self) -> None:
+        data = BUILD.derive(BUILD.load_report(PARETO))
+        report = INITIAL_REPORT.read_text(encoding="utf-8")
+        for row in data["rows"]:
+            table_row = (
+                f'| {row["mac_lanes"]} | {row["interval"]:.0f} | {row["throughput"]:,.0f} | '
+                f'{row["power_mw"]:.3f} | {row["energy"]:.3f} | {row["area"]:,.1f} | '
+                f'{row["utilization_pct"]:.1f}% |'
+            )
+            self.assertIn(table_row, report)
+        self.assertIn("### A. Two-MAC Score Scheduler", report)
+        self.assertIn("### B. Input-Activity Sensitivity", report)
+        self.assertIn("### C. Scaling Beyond Four MACs", report)
+        self.assertIn("## 9. Experiment Record Template", report)
 
     def test_main_writes_both_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
