@@ -1,5 +1,13 @@
 # Milestone 2 Pareto Report
 
+The concise interpretation is available as the generated
+[architecture analysis](architecture-analysis.html) and
+[summary report](SUMMARY.md). Rebuild both from `pareto.json` with:
+
+```sh
+python3 analysis/report/build_architecture_analysis.py
+```
+
 `build_pareto.py` compares the fixed signed-int4 toy-attention workload across
 one-, two-, and four-scalar-MAC implementations. It is a report layer only: it
 does not build RTL, run simulation, harden a layout, or run power analysis.

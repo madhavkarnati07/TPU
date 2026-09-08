@@ -100,6 +100,7 @@ three modules listed in `info.yaml`.
 - [Design roadmap](planning/toy-transformer-chip/sections/design-roadmap.html)
 - [Tapeout verification evidence](TPU/docs/tapeout_verification.md)
 - [Initial 1/2/4-MAC Pareto analysis](analysis/pareto/README.md)
+- [Concise MAC scaling analysis](analysis/pareto/architecture-analysis.html)
 
 ![Routed 2x2 toy-attention TPU](planning/toy-transformer-chip/assets/toy-tpu-layout.png)
 

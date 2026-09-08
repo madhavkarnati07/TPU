@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Toy Attention TPU &middot; Fixed-Workload MAC Scaling</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f4f5f2;
+      --surface: #ffffff;
+      --ink: #172027;
+      --muted: #5c666e;
+      --line: #cbd1d3;
+      --teal: #087f73;
+      --blue: #3d6f9e;
+      --amber: #bd7b1d;
+      --rust: #ad523e;
+      --plum: #76558f;
+      --gray: #78828a;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    main { max-width: 1120px; margin: 0 auto; padding: 28px 34px 64px; }
+    header { border-bottom: 1px solid var(--line); padding-bottom: 24px; }
+    .project { color: var(--teal); font-size: 13px; font-weight: 750; text-transform: uppercase; }
+    h1 { max-width: 800px; margin: 8px 0 8px; font-size: 36px; line-height: 1.13; letter-spacing: 0; }
+    .dek { max-width: 790px; margin: 0; color: var(--muted); font-size: 17px; }
+    .facts { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 24px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .fact { padding: 15px 18px 14px 0; }
+    .fact + .fact { padding-left: 18px; border-left: 1px solid var(--line); }
+    .fact strong { display: block; font-size: 22px; line-height: 1.1; }
+    .fact span { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; }
+    section { padding: 30px 0; border-bottom: 1px solid var(--line); }
+    h2 { margin: 0 0 6px; font-size: 22px; letter-spacing: 0; }
+    h3 { margin: 0 0 15px; font-size: 16px; letter-spacing: 0; }
+    .section-lead { max-width: 800px; margin: 0 0 22px; color: var(--muted); }
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+    .chart-grid > * { min-width: 0; }
+    figure { min-width: 0; margin: 0; }
+    figcaption { margin-top: 10px; color: var(--muted); font-size: 13px; }
+    .cycle-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) 76px; gap: 10px; align-items: center; margin: 13px 0; }
+    .row-label, .row-value { font-size: 13px; font-weight: 700; }
+    .row-value { text-align: right; }
+    .cycle-track { display: flex; height: 24px; background: #e7e9e6; overflow: hidden; }
+    .phase { display: block; min-width: 1px; }
+    .phase-project { background: var(--teal); }
+    .phase-score { background: var(--blue); }
+    .phase-max { background: var(--amber); }
+    .phase-clip { background: var(--rust); }
+    .phase-weight { background: var(--plum); }
+    .phase-norm { background: var(--gray); }
+    .phase-protocol { background: #29333a; }
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 15px; margin-top: 16px; color: var(--muted); font-size: 12px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i { width: 10px; height: 10px; display: inline-block; }
+    .metric-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .metric-row { display: grid; grid-template-columns: 48px minmax(80px, 1fr) 78px; gap: 8px; align-items: center; margin: 11px 0; font-size: 12px; }
+    .metric-row strong { text-align: right; font-size: 12px; }
+    .metric-track { height: 15px; background: #e5e8e7; }
+    .metric-track i { display: block; height: 100%; }
+    .tone-1 { background: var(--amber); }
+    .tone-2 { background: var(--blue); }
+    .tone-3 { background: var(--teal); }
+    svg { width: 100%; height: auto; display: block; }
+    .chart-frame { fill: var(--surface); stroke: var(--line); }
+    .grid { stroke: #dfe3e4; stroke-width: 1; }
+    .tick, .axis-title, .point-label, .floor-label { fill: var(--ink); font-size: 12px; }
+    .axis-title { font-weight: 700; }
+    .point-label, .floor-label { font-weight: 700; }
+    .point-1 { fill: var(--amber); }
+    .point-2 { fill: var(--blue); }
+    .point-3 { fill: var(--teal); }
+    .ideal-line { fill: none; stroke: var(--gray); stroke-width: 2; stroke-dasharray: 6 5; }
+    .actual-line { fill: none; stroke: var(--teal); stroke-width: 3; }
+    .ideal-point { fill: var(--surface); stroke: var(--gray); stroke-width: 2; }
+    .actual-point { fill: var(--teal); stroke: var(--surface); stroke-width: 2; }
+    .gap-line { stroke: var(--rust); stroke-width: 2; }
+    .floor-line { stroke: var(--amber); stroke-width: 2; stroke-dasharray: 3 4; }
+    table { width: 100%; border-collapse: collapse; margin-top: 18px; font-variant-numeric: tabular-nums; }
+    th, td { padding: 10px 9px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; }
+    thead th { color: var(--muted); font-size: 12px; font-weight: 700; }
+    tbody th { font-size: 13px; }
+    .findings { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 34px; }
+    .finding { border-top: 3px solid var(--teal); padding-top: 12px; }
+    .finding:nth-child(2) { border-color: var(--amber); }
+    .finding:nth-child(3) { border-color: var(--blue); }
+    .finding:nth-child(4) { border-color: var(--rust); }
+    .finding p { margin: 5px 0 0; color: var(--muted); }
+    .evidence { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .evidence div { padding: 18px 20px 18px 0; }
+    .evidence div + div { padding-left: 20px; border-left: 1px solid var(--line); }
+    .evidence p { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+    .next { border-left: 4px solid var(--rust); padding-left: 18px; max-width: 850px; }
+    .next p { margin: 6px 0 0; }
+    footer { padding-top: 22px; color: var(--muted); font-size: 12px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    @media (max-width: 760px) {
+      main { padding: 22px 18px 48px; }
+      h1 { font-size: 29px; }
+      .facts { grid-template-columns: 1fr 1fr; }
+      .fact:nth-child(3) { border-left: 0; }
+      .fact:nth-child(n+3) { border-top: 1px solid var(--line); }
+      .chart-grid, .findings, .metric-pair { grid-template-columns: 1fr; }
+      .evidence { grid-template-columns: 1fr; }
+      .evidence div + div { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); }
+      .table-wrap { overflow-x: auto; }
+      .cycle-row { grid-template-columns: 52px minmax(0, 1fr) 70px; gap: 7px; }
+      svg .tick, svg .axis-title, svg .point-label, svg .floor-label { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="project">Toy Attention TPU &middot; Milestone 3</div>
+    <h1>Fixed-workload MAC scaling analysis</h1>
+    <p class="dek">One, two, and four MAC lanes execute the same signed-int4, four-token attention transaction at 10 MHz inside the same 2x2 TinyTapeout tile.</p>
+    <div class="facts">
+      <div class="fact"><strong>2.12&times;</strong><span>4-MAC throughput speedup</span></div>
+      <div class="fact"><strong>42.8%</strong><span>lower total energy</span></div>
+      <div class="fact"><strong>+19.9%</strong><span>standard-cell area</span></div>
+      <div class="fact"><strong>47 cycles</strong><span>current serial floor</span></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>Where the cycles go</h2>
+    <p class="section-lead">Four lanes quarter the projection, score, and weighted-V work. Row maximum, clipping, normalization, and eleven protocol cycles do not shrink.</p>
+    <figure>
+      <div class="cycle-row" role="img" aria-label="1 MAC schedule: Q/K/V projection 48 cycles; QK^T scores 32 cycles; Row maximum 16 cycles; Clip + denominator 16 cycles; Weighted V 32 cycles; Normalize 4 cycles; host protocol 11 cycles; total interval 159 cycles"><div class="row-label">1 MAC</div><div class="cycle-track"><span class="phase phase-project" style="width:30.1887%" title="Q/K/V projection: 48 cycles"></span><span class="phase phase-score" style="width:20.1258%" title="QK^T scores: 32 cycles"></span><span class="phase phase-max" style="width:10.0629%" title="Row maximum: 16 cycles"></span><span class="phase phase-clip" style="width:10.0629%" title="Clip + denominator: 16 cycles"></span><span class="phase phase-weight" style="width:20.1258%" title="Weighted V: 32 cycles"></span><span class="phase phase-norm" style="width:2.5157%" title="Normalize: 4 cycles"></span><span class="phase phase-protocol" style="width:6.9182%" title="Host protocol: 11 cycles"></span></div><div class="row-value">159 cycles</div></div>
+<div class="cycle-row" role="img" aria-label="2 MAC schedule: Q/K/V projection 24 cycles; QK^T scores 32 cycles; Row maximum 16 cycles; Clip + denominator 16 cycles; Weighted V 16 cycles; Normalize 4 cycles; host protocol 11 cycles; total interval 119 cycles"><div class="row-label">2 MAC</div><div class="cycle-track"><span class="phase phase-project" style="width:15.0943%" title="Q/K/V projection: 24 cycles"></span><span class="phase phase-score" style="width:20.1258%" title="QK^T scores: 32 cycles"></span><span class="phase phase-max" style="width:10.0629%" title="Row maximum: 16 cycles"></span><span class="phase phase-clip" style="width:10.0629%" title="Clip + denominator: 16 cycles"></span><span class="phase phase-weight" style="width:10.0629%" title="Weighted V: 16 cycles"></span><span class="phase phase-norm" style="width:2.5157%" title="Normalize: 4 cycles"></span><span class="phase phase-protocol" style="width:6.9182%" title="Host protocol: 11 cycles"></span></div><div class="row-value">119 cycles</div></div>
+<div class="cycle-row" role="img" aria-label="4 MAC schedule: Q/K/V projection 12 cycles; QK^T scores 8 cycles; Row maximum 16 cycles; Clip + denominator 16 cycles; Weighted V 8 cycles; Normalize 4 cycles; host protocol 11 cycles; total interval 75 cycles"><div class="row-label">4 MAC</div><div class="cycle-track"><span class="phase phase-project" style="width:7.5472%" title="Q/K/V projection: 12 cycles"></span><span class="phase phase-score" style="width:5.0314%" title="QK^T scores: 8 cycles"></span><span class="phase phase-max" style="width:10.0629%" title="Row maximum: 16 cycles"></span><span class="phase phase-clip" style="width:10.0629%" title="Clip + denominator: 16 cycles"></span><span class="phase phase-weight" style="width:5.0314%" title="Weighted V: 8 cycles"></span><span class="phase phase-norm" style="width:2.5157%" title="Normalize: 4 cycles"></span><span class="phase phase-protocol" style="width:6.9182%" title="Host protocol: 11 cycles"></span></div><div class="row-value">75 cycles</div></div>
+      <div class="legend"><span><i class="phase-project"></i>Q/K/V projection</span><span><i class="phase-score"></i>QK^T scores</span><span><i class="phase-max"></i>Row maximum</span><span><i class="phase-clip"></i>Clip + denominator</span><span><i class="phase-weight"></i>Weighted V</span><span><i class="phase-norm"></i>Normalize</span><span><i class="phase-protocol"></i>Host protocol</span></div>
+      <figcaption>The 84-cycle saving from 1 to 4 MACs is entirely explained by parallel MAC phases: 48&rarr;12, 32&rarr;8, 32&rarr;8.</figcaption>
+    </figure>
+  </section>
+
+  <section class="chart-grid">
+    <figure>
+      <h2>Power rises; energy falls</h2>
+      <div class="metric-pair">
+        <div><h3>Active power</h3><div class="metric-row"><span>1 MAC</span><span class="metric-track"><i class="tone-1" style="width:82.465%"></i></span><strong>0.354 mW</strong></div>
+<div class="metric-row"><span>2 MAC</span><span class="metric-track"><i class="tone-2" style="width:89.091%"></i></span><strong>0.383 mW</strong></div>
+<div class="metric-row"><span>4 MAC</span><span class="metric-track"><i class="tone-3" style="width:100.000%"></i></span><strong>0.430 mW</strong></div></div>
+        <div><h3>Energy per attention</h3><div class="metric-row"><span>1 MAC</span><span class="metric-track"><i class="tone-1" style="width:100.000%"></i></span><strong>5.636 nJ</strong></div>
+<div class="metric-row"><span>2 MAC</span><span class="metric-track"><i class="tone-2" style="width:80.857%"></i></span><strong>4.557 nJ</strong></div>
+<div class="metric-row"><span>4 MAC</span><span class="metric-track"><i class="tone-3" style="width:57.200%"></i></span><strong>3.224 nJ</strong></div></div>
+      </div>
+      <figcaption>The 4-MAC design draws 21.3% more active power, but its steady-state interval is 52.8% shorter, reducing energy by 42.8%.</figcaption>
+    </figure>
+    <figure>
+      <h2>The area tradeoff</h2>
+      <svg viewBox="0 0 680 365" role="img" aria-label="Throughput versus standard-cell area for the three measured variants"><rect class="chart-frame" x="90" y="28" width="562" height="275"/><line class="grid" x1="90" x2="652" y1="303.0" y2="303.0"/><text class="tick" x="80" y="307.0" text-anchor="end">60k</text><line class="grid" x1="90" x2="652" y1="234.2" y2="234.2"/><text class="tick" x="80" y="238.2" text-anchor="end">80k</text><line class="grid" x1="90" x2="652" y1="165.5" y2="165.5"/><text class="tick" x="80" y="169.5" text-anchor="end">100k</text><line class="grid" x1="90" x2="652" y1="96.8" y2="96.8"/><text class="tick" x="80" y="100.8" text-anchor="end">120k</text><line class="grid" x1="90" x2="652" y1="28.0" y2="28.0"/><text class="tick" x="80" y="32.0" text-anchor="end">140k</text><line class="grid" x1="133.2" x2="133.2" y1="28" y2="303"/><text class="tick" x="133.2" y="325" text-anchor="middle">46k</text><line class="grid" x1="306.2" x2="306.2" y1="28" y2="303"/><text class="tick" x="306.2" y="325" text-anchor="middle">50k</text><line class="grid" x1="479.1" x2="479.1" y1="28" y2="303"/><text class="tick" x="479.1" y="325" text-anchor="middle">54k</text><line class="grid" x1="652.0" x2="652.0" y1="28" y2="303"/><text class="tick" x="652.0" y="325" text-anchor="middle">58k</text><circle class="point point-1" cx="166.0" cy="293.1" r="8"/><text class="point-label" x="176.0" y="281.1" text-anchor="start">1 MAC &middot; 5.64 nJ</text><circle class="point point-2" cx="280.9" cy="220.4" r="8"/><text class="point-label" x="290.9" y="208.4" text-anchor="start">2 MAC &middot; 4.56 nJ</text><circle class="point point-3" cx="568.3" cy="50.9" r="8"/><text class="point-label" x="558.3" y="38.9" text-anchor="end">4 MAC &middot; 3.22 nJ</text><text class="axis-title" x="371.0" y="357" text-anchor="middle">Standard-cell area (um^2)</text><text class="axis-title" transform="translate(17 165.5) rotate(-90)" text-anchor="middle">Throughput (attention/s)</text></svg>
+      <figcaption>All three points remain non-dominated when area, throughput, and energy are considered together.</figcaption>
+    </figure>
+  </section>
+
+  <section class="chart-grid">
+    <figure>
+      <h2>Measured scaling versus the bound</h2>
+      <svg viewBox="0 0 680 365" role="img" aria-label="Actual and ideal initiation interval as MAC lanes increase"><rect class="chart-frame" x="90" y="28" width="562" height="275"/><line class="grid" x1="90" x2="652" y1="303.0" y2="303.0"/><text class="tick" x="80" y="307.0" text-anchor="end">40</text><line class="grid" x1="90" x2="652" y1="218.4" y2="218.4"/><text class="tick" x="80" y="222.4" text-anchor="end">80</text><line class="grid" x1="90" x2="652" y1="133.8" y2="133.8"/><text class="tick" x="80" y="137.8" text-anchor="end">120</text><line class="grid" x1="90" x2="652" y1="49.2" y2="49.2"/><text class="tick" x="80" y="53.2" text-anchor="end">160</text><text class="tick" x="90.0" y="325" text-anchor="middle">1</text><text class="tick" x="277.3" y="325" text-anchor="middle">2</text><text class="tick" x="464.7" y="325" text-anchor="middle">4</text><text class="tick" x="652.0" y="325" text-anchor="middle">8</text><polyline class="ideal-line" points="90.0,51.3 277.3,169.7 464.7,229.0 652.0,258.6"/><polyline class="actual-line" points="90.0,51.3 277.3,135.9 464.7,229.0"/><circle class="ideal-point" cx="90.0" cy="51.3" r="5"/><circle class="ideal-point" cx="277.3" cy="169.7" r="5"/><circle class="ideal-point" cx="464.7" cy="229.0" r="5"/><circle class="ideal-point" cx="652.0" cy="258.6" r="5"/><circle class="actual-point" cx="90.0" cy="51.3" r="7"/><circle class="actual-point" cx="277.3" cy="135.9" r="7"/><circle class="actual-point" cx="464.7" cy="229.0" r="7"/><line class="gap-line" x1="277.3" x2="277.3" y1="135.9" y2="169.7"/><text class="point-label" x="287.3" y="152.8">16-cycle schedule gap</text><line class="floor-line" x1="90" x2="652" y1="288.2" y2="288.2"/><text class="floor-label" x="648" y="281.2" text-anchor="end">47-cycle serial floor</text><text class="axis-title" x="371.0" y="357" text-anchor="middle">MAC lanes</text><text class="axis-title" transform="translate(17 165.5) rotate(-90)" text-anchor="middle">Initiation interval (cycles)</text></svg>
+      <figcaption>The ideal line is 47 + 112/L cycles. The current 2-MAC schedule is 16 cycles above it because QK<sup>T</sup> remains single-lane.</figcaption>
+    </figure>
+    <div>
+      <h2>Implementation results</h2>
+      <p class="section-lead">Every point performs 112 useful scalar MAC operations and matches the same 16 Python golden cases in RTL and powered gate simulation.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Variant</th><th>Interval</th><th>Throughput/s</th><th>Power mW</th><th>Energy nJ</th><th>Area um^2</th><th>MAC use</th></tr></thead>
+          <tbody><tr><th scope="row">1 MAC</th><td>159</td><td>62,893</td><td>0.354</td><td>5.636</td><td>46,757.3</td><td>75.7%</td></tr>
+<tr><th scope="row">2 MAC</th><td>119</td><td>84,034</td><td>0.383</td><td>4.557</td><td>49,416.1</td><td>51.9%</td></tr>
+<tr><th scope="row">4 MAC</th><td>75</td><td>133,333</td><td>0.430</td><td>3.224</td><td>56,065.0</td><td>43.8%</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What we learned</h2>
+    <div class="findings">
+      <div class="finding"><strong>Four MACs win on speed and energy.</strong><p>They deliver 2.12&times; throughput and 42.8% lower energy for 19.9% more cell area than one MAC.</p></div>
+      <div class="finding"><strong>The smallest design is not the lowest-energy design.</strong><p>Fixed clock and controller activity is paid for 159 cycles with one MAC and only 75 cycles with four.</p></div>
+      <div class="finding"><strong>Utilization falls as lane count rises.</strong><p>Derived MAC utilization drops from 75.7% to 43.8% because the serial attention phases occupy a larger fraction of the shorter schedule.</p></div>
+      <div class="finding"><strong>Four MACs are enough for this problem shape.</strong><p>Four tokens expose four independent QK<sup>T</sup> scores. More lanes require parallel query rows or a larger workload.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Evidence boundary</h2>
+    <div class="evidence">
+      <div><strong>Measured</strong><p>Cycles, outputs, activity, tool-reported post-route power estimate, cell area, timing, DRC, and LVS for the three implemented variants.</p></div>
+      <div><strong>Derived</strong><p>Speedup, energy reduction, utilization, the 47-cycle serial floor, and the Amdahl scaling curve.</p></div>
+      <div><strong>Hypothesis</strong><p>A score-parallel 2-MAC schedule could reach about 103 cycles and 97,087 attention/s. Power and area are not predicted.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="next">
+      <h2>Next controlled experiment</h2>
+      <p>Keep the workload, arithmetic, memory, MAC count, and clock fixed. Change only the 2-MAC QK<sup>T</sup> scheduler so two key scores run together. This tests whether scheduling, rather than additional arithmetic, can recover the 16-cycle gap.</p>
+    </div>
+  </section>
+
+  <footer>Power is an activity-aware post-route OpenSTA estimate from the measured gate-level VCD, not a silicon measurement. Maximum-slew warnings remain; the 2- and 4-MAC layouts also retain maximum-capacitance warnings. Official TinyTapeout submission checks remain required.</footer>
+</main>
+</body>
+</html>
