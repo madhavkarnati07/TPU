@@ -104,38 +104,12 @@ See [`pareto/README.md`](pareto/README.md) for artifact generation.
 - **Hypothesis:** 119 to 103 cycles; 84,034 to about 97,087 attention/s.
 - **Add:** `[Measured cycles, area, power, energy, checks, and conclusion.]`
 
-### B. Input-Activity Sensitivity
-
-- **Question:** How much does estimated energy depend on input bit activity?
-- **Control:** Keep one routed design and measurement window; change only inputs.
-- **Compare:** Low-, typical-, and high-toggle input sets.
-- **Add:** `[Input definitions, power spread, energy spread, and conclusion.]`
-
-### C. Scaling Beyond Four MACs
+### B. Scaling Beyond Four MACs
 
 - **Question:** Can eight lanes overcome the 47-cycle floor and four-key limit?
 - **Control:** Keep arithmetic, precision, clock, tools, and metrics fixed.
 - **Requirement:** Expose more independent work before adding lanes.
 - **Add:** `[Cycle model, implementation results, bound, and conclusion.]`
 
-Change workload shape, memory size, precision, or clock in separate studies so
-each result has one primary cause.
-
-## 9. Experiment Record Template
-
-```text
-Question:
-Hypothesis:
-Changed variable:
-Controlled constants:
-Branch and commit:
-Commands:
-Correctness result:
-Cycles and throughput:
-Power and energy:
-Area and physical checks:
-Observed or tool-reported facts:
-Derived values:
-Limitations:
-Conclusion:
-```
+Further studies can change workload shape, memory size, precision, clock, or
+other architecture variables.

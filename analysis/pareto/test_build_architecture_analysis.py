@@ -66,9 +66,7 @@ class ArchitectureAnalysisTests(unittest.TestCase):
             )
             self.assertIn(table_row, report)
         self.assertIn("### A. Two-MAC Score Scheduler", report)
-        self.assertIn("### B. Input-Activity Sensitivity", report)
-        self.assertIn("### C. Scaling Beyond Four MACs", report)
-        self.assertIn("## 9. Experiment Record Template", report)
+        self.assertIn("### B. Scaling Beyond Four MACs", report)
 
     def test_main_writes_both_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
