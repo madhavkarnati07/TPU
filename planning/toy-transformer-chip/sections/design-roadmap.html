@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Design Roadmap</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="section-header">
+    <a href="../index.html">Back to index</a>
+    <h1>Design Roadmap</h1>
+    <p class="lede">The completed path from prerequisite math through a prechecked 2x2 layout.</p>
+  </header>
+
+  <main>
+    <section class="band">
+      <h2>Roadmap Overview</h2>
+      <p>
+        We followed the roadmap top-down: study the math, freeze an exact Python model, size the
+        architecture, implement RTL, compare it with the model, then harden and precheck the design.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Phase</th>
+            <th>Purpose</th>
+            <th>Planning Output</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>0. Prerequisite study</td>
+            <td>Understand the minimum math story before writing models.</td>
+            <td>Notes on matmul, dot products, simple single-head self-attention, and softmax.</td>
+            <td><strong>Complete</strong></td>
+          </tr>
+          <tr>
+            <td>1. Python/Numpy model</td>
+            <td>Define the exact toy computation and expected results.</td>
+            <td>Golden model, data format rules, examples, expected byte streams.</td>
+            <td><strong>Complete</strong></td>
+          </tr>
+          <tr>
+            <td>2. High-level chip architecture</td>
+            <td>Choose the hardware shape before writing RTL.</td>
+            <td><a href="high-level-architecture.html">Fixed architecture brief</a>, memory/register sizing, MAC count, FSM sketch, host/chip split, IO protocol.</td>
+            <td><strong>Complete</strong></td>
+          </tr>
+          <tr>
+            <td>3. RTL design</td>
+            <td>Describe the selected architecture as hardware modules and signals.</td>
+            <td>Module boundaries, signal contract, state machine, reset behavior.</td>
+            <td><strong>Complete</strong></td>
+          </tr>
+          <tr>
+            <td>4. RTL simulation</td>
+            <td>Check the Verilog behavior against the Python model before tapeout work.</td>
+            <td>cocotb test plan, waveform checklist, pass/fail criteria.</td>
+            <td><strong>Complete</strong></td>
+          </tr>
+          <tr>
+            <td>5. Tiny Tapeout template / hardening</td>
+            <td>Package the design for the ASIC flow and verify the hardened netlist.</td>
+            <td>Tiny Tapeout wrapper plan, hardening checklist, gate-level simulation plan.</td>
+            <td><strong>Local flow complete</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Design Sequencing</h2>
+      <p>
+        The implemented design went directly to fixed-shape attention after validating the MAC
+        primitive. It reuses the same ready/valid byte boundary and two MAC lanes across every phase.
+      </p>
+      <ul>
+        <li>The standalone PE remains as the smallest arithmetic test.</li>
+        <li><code>FLUSH</code> invalidates the current transaction and all load flags.</li>
+        <li>The Python model defines every projection, attention, normalization, and byte-level result.</li>
+        <li>Source RTL and the powered gate netlist now pass the same complete host transaction.</li>
+      </ul>
+    </section>
+
+    <section class="band">
+      <h2>Phase 0: Prerequisite Study</h2>
+      <p>
+        Before choosing a model or hardware primitive, study the smallest version of the math.
+        The target is one simple single-head self-attention path, not full transformer coverage.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Deliverables</th>
+            <th>Success Criteria</th>
+            <th>Decisions Made Here</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Short notes for matrix multiplication and dot products.</td>
+            <td>We can explain how a MAC, dot-product engine, or 2x2 matmul tile supports attention.</td>
+            <td>Which concepts must be visible in the educational demo.</td>
+          </tr>
+          <tr>
+            <td>Short notes for one-head self-attention: Q, K, V, score, softmax, weighted V.</td>
+            <td>We can trace one tiny example by hand with sequence length 4.</td>
+            <td>Chosen for now: the chip should compute Q/K/V projections rather than only consuming precomputed Q/K/V.</td>
+          </tr>
+          <tr>
+            <td>Softmax purpose note.</td>
+            <td>We understand that softmax turns scores into normalized weights, and why exact exp/divide is expensive for a tiny chip.</td>
+            <td>Whether softmax approximation belongs on-chip, host-side, or as a simplified demo mode.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Phase 1: Python/Numpy Model</h2>
+      <p>
+        This is the source of truth for behavior. It should be small enough to understand in one
+        sitting and strict enough that the RTL has no ambiguity.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Deliverables</th>
+            <th>Success Criteria</th>
+            <th>Decisions Made Here</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Golden model for matmul, dot product, and a tiny attention example.</td>
+            <td>Every example has deterministic expected outputs and byte-level input/output traces.</td>
+            <td>Chosen for now: int4 arithmetic candidate, with integer Q/K/V matrices adjusted for integer dot products.</td>
+          </tr>
+          <tr>
+            <td>Softmax approximation candidates expressed in Python.</td>
+            <td>At least one approximation is simple enough to explain and compare against exact softmax.</td>
+            <td>Whether softmax is host-assisted, LUT-like, argmax-like, or simple normalization.</td>
+          </tr>
+          <tr>
+            <td>Problem-size candidates such as sequence length, hidden size, and tile shape.</td>
+            <td>Examples are small enough to fit the Tiny Tapeout mindset and large enough to tell the transformer story.</td>
+            <td>Whether int4 gives enough room to justify using it over int8.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Phase 1 Exit Gate</h2>
+      <p>
+        Move to high-level chip architecture only after the Python model becomes a hardware-shaped
+        contract, not just a floating-point explanation.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Needed Before Phase 2</th>
+            <th>Why It Matters</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fixed toy shape: token count, embedding width, head count, and Q/K/V dimensions.</td>
+            <td>Locked for Phase 2 as <code>N = 4</code>, <code>D_IN = 2</code>, <code>D_QKV = 2</code>, one head.</td>
+          </tr>
+          <tr>
+            <td>Signed int4 format and packing rule.</td>
+            <td>Locked for Phase 2 as two's-complement <code>[-8, 7]</code>, two packed values per byte.</td>
+          </tr>
+          <tr>
+            <td>Working accumulator choice: signed 16-bit.</td>
+            <td>Gives simple byte-aligned outputs and enough headroom for int4 dot products, Q/K/V projection sums, and later slightly larger toy examples.</td>
+          </tr>
+          <tr>
+            <td>Integer Q/K/V projection matrices and integer input embeddings.</td>
+            <td>Lets the chip compute Q, K, and V using integer dot products instead of float math.</td>
+          </tr>
+          <tr>
+            <td>Reference outputs at each boundary: Q, K, V, scores, approximate weights, and final output.</td>
+            <td>Gives Phase 2 and later RTL simulation concrete values to match.</td>
+          </tr>
+          <tr>
+            <td>Softmax approximation choice or shortlist.</td>
+            <td>Working choice: clipped-linear attention, using <code>B = 4</code>, <code>u_i = max(0, B + score_i - max_score)</code>, <code>Q0.8</code> reciprocal LUT normalization, and round-to-nearest.</td>
+          </tr>
+          <tr>
+            <td>Host/chip split for Phase 2 sizing.</td>
+            <td>Clarifies what is stored or sequenced by the host versus registers/FSM on the chip.</td>
+          </tr>
+          <tr>
+            <td>Byte-level command/input/output trace for one full example.</td>
+            <td>Becomes the first protocol sketch for the Tiny Tapeout IO and cocotb tests.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Accumulator Width Rationale</h2>
+      <p>
+        Use a signed 16-bit accumulator as the first working choice. Signed int4 values have range
+        <code>[-8, 7]</code>. One product can reach <code>64</code>, and a 2-wide dot product can
+        reach <code>128</code>, which already does not fit cleanly in signed 8-bit. A 9- or 10-bit
+        accumulator could work for the smallest case, but 16-bit is easier to explain, easier to
+        serialize over an 8-bit output bus, and gives room for 4-wide toy dots later.
+      </p>
+      <ul>
+        <li>Internal dot-product accumulator: signed 16-bit.</li>
+        <li>Q/K/V projection outputs: clamp or requantize back to int4 before the next stage.</li>
+        <li>Boundary outputs for debugging: expose 16-bit signed values as high byte then low byte.</li>
+        <li>Reason to avoid narrower accumulators for now: they save bits but complicate edge cases and explanation.</li>
+      </ul>
+    </section>
+
+    <section class="band">
+      <h2>Softmax Approximation Hardware Options</h2>
+      <p>
+        Exact softmax is not a good tiny-chip target because it needs exponentials and division.
+        A softmax approximation can be realized in hardware if we choose one that maps to small
+        comparators, shifts, adders, or tiny lookup tables.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Option</th>
+            <th>Hardware Shape</th>
+            <th>Planning Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Clipped-linear attention</td>
+            <td>Subtract row max, add <code>B = 4</code>, clamp negatives to zero, sum weighted V, then normalize by <code>sum_u</code>.</td>
+            <td>Working choice, with <code>Q0.8</code> reciprocal LUT normalization and round-to-nearest.</td>
+          </tr>
+          <tr>
+            <td>Hardmax attention</td>
+            <td>Find max score and select that token's V vector with one-hot weights.</td>
+            <td>Fallback if clipped-linear normalization is too costly.</td>
+          </tr>
+          <tr>
+            <td>Host-assisted softmax</td>
+            <td>Chip emits scores; host computes weights; chip optionally consumes weights to compute weighted V.</td>
+            <td>Fallback if any on-chip approximation becomes too distracting.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Normalization LUT Rationale</h2>
+      <p>
+        A lookup table is reasonable for the clipped-linear normalization because the denominator
+        range is tiny. If the sequence length is 4 and <code>B = 4</code>, each clipped weight
+        <code>u_i</code> is in <code>[0, 4]</code>, and the max-scoring token always contributes
+        <code>4</code>. That means <code>sum_u</code> is only in <code>[4, 16]</code>.
+      </p>
+      <ul>
+        <li>Store fixed-point reciprocals for denominators 4 through 16.</li>
+        <li>Compute <code>numerator = sum(u_i * V_i)</code> with the 16-bit accumulator path.</li>
+        <li>Approximate <code>numerator / sum_u</code> as <code>(numerator * reciprocal[sum_u]) &gt;&gt; scale_bits</code>.</li>
+        <li>If the LUT multiply is still too much, fall back to hardmax attention or host-assisted normalization.</li>
+      </ul>
+    </section>
+
+    <section class="band">
+      <h2>Locked Phase 2 Inputs</h2>
+      <ol>
+        <li>Use sequence length 4, embedding width 2, one head, and Q/K/V width 2.</li>
+        <li>Use signed int4 two's-complement range <code>[-8, 7]</code>, two packed values per byte.</li>
+        <li>Keep Q/K/V projection on-chip using integer input embeddings and integer <code>Wq</code>, <code>Wk</code>, <code>Wv</code> matrices.</li>
+        <li>Use clipped-linear attention with <code>B = 4</code>, <code>Q0.8</code> reciprocal LUT normalization, round-to-nearest, and saturating int4 clamp.</li>
+        <li>Decide clamp/requantization points from 16-bit accumulators back to int4 between stages.</li>
+        <li>Generate reference traces for Q, K, V, scores, clipped-linear weights, final output, and byte streams.</li>
+        <li>Use the <a href="high-level-architecture.html">High-Level Chip Architecture</a> page as the Phase 2 sizing brief.</li>
+      </ol>
+    </section>
+
+    <section class="band">
+      <h2>Phase 2: High-Level Chip Architecture</h2>
+      <p>
+        This is where we plan memory size, registers, MAC count, control states, host/chip split,
+        and the external protocol. It happens before detailed RTL design. The current fixed scope
+        lives in the <a href="high-level-architecture.html">High-Level Chip Architecture</a> page.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Deliverables</th>
+            <th>Success Criteria</th>
+            <th>Decisions Made Here</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Block diagram and datapath sketch.</td>
+            <td>Someone can explain how bytes become outputs without reading RTL.</td>
+            <td>Chosen primitive: two reusable MAC lanes; scores serialize through lane 0.</td>
+          </tr>
+          <tr>
+            <td>Resource sketch for MAC units, accumulators, registers, and any tiny buffers.</td>
+            <td>The design has a plausible Tiny Tapeout fit before implementation begins.</td>
+            <td>Number of MAC units, accumulator width, memory/register budget, and reuse strategy.</td>
+          </tr>
+          <tr>
+            <td>Host/chip protocol sketch with command, load, compute, drain, and flush behavior.</td>
+            <td>The protocol can run matmul/dot-product first and leave room for attention later.</td>
+            <td>Which state lives on-chip versus in the Python host/demo script.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Phase 3: RTL Design</h2>
+      <p>
+        This phase turned the selected architecture into the implemented Verilog module and signal contracts.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Deliverables</th>
+            <th>Success Criteria</th>
+            <th>Decisions Made Here</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Module list with inputs, outputs, registers, and reset behavior.</td>
+            <td>Each module has one job and a clear test strategy.</td>
+            <td>Exact module boundaries and signal names.</td>
+          </tr>
+          <tr>
+            <td>FSM state table for command/load/compute/drain/flush.</td>
+            <td>Every transition has an input condition and expected output behavior.</td>
+            <td>Whether the design uses a single controller or split protocol/datapath controllers.</td>
+          </tr>
+          <tr>
+            <td>Cycle-level output ordering and valid/done behavior.</td>
+            <td>The RTL contract can be tested against the Python byte traces.</td>
+            <td>Exact handshake semantics and what happens on reset or interrupted jobs.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Phase 4: RTL Simulation</h2>
+      <p>
+        This phase proves that the RTL matches the Python model. The first simulator target should
+        be cocotb plus Icarus Verilog, because the tests can reuse Python expected outputs.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Deliverables</th>
+            <th>Success Criteria</th>
+            <th>Decisions Made Here</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>cocotb test plan driven by the same byte protocol as the future board demo.</td>
+            <td>RTL outputs match the Python model for representative examples.</td>
+            <td>Which tests are required before hardening is allowed.</td>
+          </tr>
+          <tr>
+            <td>Waveform checklist for reset, load, compute, drain, flush, valid, and accumulators.</td>
+            <td>Waveforms make the pipeline understandable as an educational artifact.</td>
+            <td>Which internal signals should be inspected or exposed during debug.</td>
+          </tr>
+          <tr>
+            <td>Failure-case tests for reset during operation and bad/partial input streams.</td>
+            <td>The design recovers to a known state without ambiguous outputs.</td>
+            <td>How defensive the protocol should be for a toy chip.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Phase 5: Tiny Tapeout Template / Hardening</h2>
+      <p>
+        This phase packaged the stable RTL into the Tiny Tapeout wrapper, ran hardening, checked the
+        powered gate-level behavior, created the submission bundle, and passed local precheck.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Deliverables</th>
+            <th>Success Criteria</th>
+            <th>Decisions Made Here</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Tiny Tapeout wrapper mapping for `ui_in`, `uo_out`, `uio_in`, `uio_out`, `uio_oe`, `clk`, and `rst_n`.</td>
+            <td>The wrapper preserves the simulated byte protocol.</td>
+            <td>Final pin assignment and any debug/status bits.</td>
+          </tr>
+          <tr>
+            <td>Hardening checklist and gate-level simulation plan.</td>
+            <td>Docs, GDS, and gate-level simulation pass on the same golden-model examples.</td>
+            <td>Whether the current design is ready to submit or should be simplified.</td>
+          </tr>
+          <tr>
+            <td>Submission-readiness notes.</td>
+            <td>The project has a clear demo story, tests, and known limitations.</td>
+            <td>Which shuttle/template path to target.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band">
+      <h2>Remaining Release Work</h2>
+      <ol>
+        <li>Review the remaining non-fatal max-slew warnings from slow and typical corners.</li>
+        <li>Freeze and push the exact release commit.</li>
+        <li>Run the official Tiny Tapeout cloud workflow on that commit.</li>
+        <li>Select a shuttle and submit after its checks pass.</li>
+      </ol>
+    </section>
+  </main>
+</body>
+</html>

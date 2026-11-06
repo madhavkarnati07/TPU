@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Toy TPU End-to-End Walkthrough</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="section-header">
+    <a href="../index.html">Back to index</a>
+    <h1>Toy TPU End-to-End Walkthrough</h1>
+    <p class="lede">
+      Follow the implemented data path, controller, byte protocol, and Verilog through one
+      complete toy-attention transaction.
+    </p>
+  </header>
+
+  <main>
+    <section class="band" id="goal">
+      <h2>The Goal In One Pass</h2>
+      <p>
+        The host loads four tiny token vectors and three projection matrices. The chip computes
+        Q, K, and V, builds one-head attention, and returns four output vectors. It is deliberately
+        serialized: two small MAC lanes are reused over many clock cycles.
+      </p>
+      <div class="spec-strip" aria-label="Fixed toy TPU specification">
+        <div><span>Tokens</span><strong>4</strong></div>
+        <div><span>Vector width</span><strong>2</strong></div>
+        <div><span>Operands</span><strong>Signed int4</strong></div>
+        <div><span>Accumulator</span><strong>Signed int16</strong></div>
+        <div><span>Attention</span><strong>One head</strong></div>
+        <div><span>Normalization</span><strong>Clipped + Q0.8</strong></div>
+      </div>
+    </section>
+
+    <section class="band" id="attention-pass">
+      <h2>Watch One Attention Pass</h2>
+      <p>
+        This is a phase-level animation, not a clock trace. Follow the moving solid paths for data
+        and the dashed blue paths for commands from the controller. The example follows token 0
+        in detail, then shows the same row loop being reused for tokens 1 through 3.
+      </p>
+
+      <div class="execution-animation" data-execution-animation>
+        <div class="execution-toolbar">
+          <button type="button" class="icon-button" data-exec-action="prev" aria-label="Previous phase" title="Previous phase">&larr;</button>
+          <button type="button" class="icon-button" data-exec-action="play" aria-label="Pause animation" title="Pause animation" data-exec-play>&#10074;&#10074;</button>
+          <button type="button" class="icon-button" data-exec-action="next" aria-label="Next phase" title="Next phase">&rarr;</button>
+          <div class="execution-position" aria-live="polite">
+            Phase <span data-exec-current>1</span> of <span data-exec-total>8</span>
+          </div>
+          <div class="flow-legend" aria-label="Diagram legend">
+            <span><i class="legend-data"></i>Data</span>
+            <span><i class="legend-control"></i>Control</span>
+            <span><i class="legend-current"></i>Active RTL block</span>
+          </div>
+        </div>
+
+        <div class="execution-phases" aria-label="Execution phases">
+          <button type="button" data-exec-step="0">Load</button>
+          <button type="button" data-exec-step="1">Project Q/K/V</button>
+          <button type="button" data-exec-step="2">Score row 0</button>
+          <button type="button" data-exec-step="3">Clip row 0</button>
+          <button type="button" data-exec-step="4">Weight V</button>
+          <button type="button" data-exec-step="5">Normalize</button>
+          <button type="button" data-exec-step="6">Repeat rows</button>
+          <button type="button" data-exec-step="7">Return bytes</button>
+        </div>
+
+        <div class="execution-statebar">
+          <span><small>FSM state</small><strong data-exec-state>LOAD</strong></span>
+          <span><small>Loop counters</small><strong data-exec-counters>target=X/W, byte=0..9</strong></span>
+          <span><small>Handshake</small><strong data-exec-handshake>busy=0, input accepted</strong></span>
+        </div>
+
+        <div class="architecture-canvas">
+          <svg class="execution-svg" viewBox="0 0 1180 670" role="img" aria-labelledby="exec-diagram-title exec-diagram-desc">
+            <title id="exec-diagram-title">Animated toy TPU architecture</title>
+            <desc id="exec-diagram-desc">A host exchanges bytes with a serialized attention chip. Solid paths carry data. Dashed paths carry controller signals.</desc>
+            <defs>
+              <marker id="data-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z"></path>
+              </marker>
+              <marker id="control-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z"></path>
+              </marker>
+            </defs>
+
+            <rect class="chip-boundary" x="165" y="18" width="990" height="625" rx="8"></rect>
+            <text class="chip-label" x="185" y="48">TOY TPU CHIP</text>
+            <text class="chip-code" x="185" y="70">project.v + toy_attention_core.v (verified)</text>
+
+            <g class="data-paths" aria-hidden="true">
+              <path data-data-edge="host-in" d="M138 304 L195 304"></path>
+              <path data-data-edge="io-regs" d="M340 322 L385 322"></path>
+              <path data-data-edge="regs-mac" d="M560 286 L610 286"></path>
+              <path data-data-edge="mac-qkv" d="M760 276 C785 276 780 215 805 215"></path>
+              <path data-data-edge="qkv-mac" d="M805 245 C780 245 788 350 760 350"></path>
+              <path data-data-edge="mac-scores" d="M760 332 L805 357"></path>
+              <path data-data-edge="scores-clip" d="M887 416 L887 455"></path>
+              <path data-data-edge="clip-mac" d="M805 530 C775 530 790 380 760 380"></path>
+              <path data-data-edge="mac-numerators" d="M685 395 L685 475"></path>
+              <path data-data-edge="numerators-normalize" d="M760 530 L1000 530"></path>
+              <path data-data-edge="normalize-result" d="M1065 455 L1065 416"></path>
+              <path data-data-edge="result-io" d="M1000 357 L980 357 L980 610 L268 610 L268 403"></path>
+              <path data-data-edge="host-out" d="M195 360 L138 360"></path>
+            </g>
+
+            <g class="control-paths" aria-hidden="true">
+              <path data-control-edge="ctrl-io" d="M445 140 C390 175 300 190 268 245"></path>
+              <path data-control-edge="ctrl-registers" d="M535 140 L475 215"></path>
+              <path data-control-edge="ctrl-mac" d="M660 140 L685 245"></path>
+              <path data-control-edge="ctrl-qkv" d="M760 140 L855 155"></path>
+              <path data-control-edge="ctrl-scores" d="M800 140 C920 175 887 245 887 300"></path>
+              <path data-control-edge="ctrl-clip" d="M825 140 C990 225 930 390 900 455"></path>
+              <path data-control-edge="ctrl-numerators" d="M640 140 C570 255 570 420 640 475"></path>
+              <path data-control-edge="ctrl-normalize" d="M850 140 C1080 230 1080 365 1065 455"></path>
+              <path data-control-edge="ctrl-result" d="M875 140 C1110 190 1080 250 1065 300"></path>
+            </g>
+
+            <g class="exec-node host-node" data-exec-node="host">
+              <rect class="node-box planned" x="18" y="265" width="120" height="118" rx="7"></rect>
+              <text class="node-kicker" x="34" y="290">OUTSIDE CHIP</text>
+              <text class="node-title" x="34" y="316">Host</text>
+              <text class="node-code" x="34" y="339">Python / cocotb</text>
+              <text class="node-value" data-exec-value="host" x="34" y="365">10 payload bytes</text>
+            </g>
+
+            <g class="exec-node" data-exec-node="controller">
+              <rect class="node-box available" x="390" y="58" width="500" height="82" rx="7"></rect>
+              <text class="node-kicker" x="410" y="82">CONTROL PATH</text>
+              <text class="node-title" x="410" y="108">Controller FSM + loop counters</text>
+              <text class="node-code" x="410" y="130">toy_attention_core.v: 10-state FSM</text>
+            </g>
+
+            <g class="exec-node" data-exec-node="io">
+              <rect class="node-box available" x="195" y="245" width="145" height="158" rx="7"></rect>
+              <text class="node-kicker" x="212" y="270">BYTE BOUNDARY</text>
+              <text class="node-title" x="212" y="296">Command + I/O</text>
+              <text class="node-code" x="212" y="318">project.v + core</text>
+              <text class="node-value" data-exec-value="io" x="212" y="347">LOAD_X</text>
+              <text class="node-value second" data-exec-value="io2" x="212" y="370">packed int4 byte</text>
+            </g>
+
+            <g class="exec-node" data-exec-node="registers">
+              <rect class="node-box available" x="385" y="215" width="175" height="208" rx="7"></rect>
+              <text class="node-kicker" x="402" y="240">ON-CHIP STATE</text>
+              <text class="node-title" x="402" y="266">Register storage</text>
+              <text class="node-code" x="402" y="288">packed register arrays</text>
+              <text class="node-value" data-exec-value="registers" x="402" y="318">X, Wq, Wk, Wv</text>
+              <text class="node-value second" data-exec-value="registers2" x="402" y="343">empty -&gt; loaded</text>
+              <text class="node-note" x="402" y="389">Also holds Q/K/V, scores,</text>
+              <text class="node-note" x="402" y="408">weights and final results.</text>
+            </g>
+
+            <g class="exec-node" data-exec-node="mac">
+              <rect class="node-box available" x="610" y="245" width="150" height="150" rx="7"></rect>
+              <text class="node-kicker" x="627" y="270">REUSED MATH</text>
+              <text class="node-title" x="627" y="296">Two int4 MACs</text>
+              <text class="node-code" x="627" y="318">dual_int4_mac.v</text>
+              <text class="node-value" data-exec-value="mac" x="627" y="347">idle</text>
+              <text class="node-value second" data-exec-value="mac2" x="627" y="370">acc int16</text>
+            </g>
+
+            <g class="exec-node" data-exec-node="qkv">
+              <rect class="node-box available" x="805" y="155" width="165" height="116" rx="7"></rect>
+              <text class="node-kicker" x="822" y="180">PROJECTED DATA</text>
+              <text class="node-title" x="822" y="206">Q / K / V store</text>
+              <text class="node-code" x="822" y="228">q_mem / k_mem / v_mem</text>
+              <text class="node-value" data-exec-value="qkv" x="822" y="254">not computed</text>
+            </g>
+
+            <g class="exec-node" data-exec-node="scores">
+              <rect class="node-box available" x="805" y="300" width="165" height="116" rx="7"></rect>
+              <text class="node-kicker" x="822" y="325">ROW SCRATCH</text>
+              <text class="node-title" x="822" y="351">Score row</text>
+              <text class="node-code" x="822" y="373">4 x signed int16</text>
+              <text class="node-value" data-exec-value="scores" x="822" y="399">[ -, -, -, - ]</text>
+            </g>
+
+            <g class="exec-node" data-exec-node="clip">
+              <rect class="node-box available" x="805" y="455" width="165" height="116" rx="7"></rect>
+              <text class="node-kicker" x="822" y="480">NONLINEAR STEP</text>
+              <text class="node-title" x="822" y="506">Max + clip</text>
+              <text class="node-code" x="822" y="528">max + clipped_weight()</text>
+              <text class="node-value" data-exec-value="clip" x="822" y="554">u = [ -, -, -, - ]</text>
+            </g>
+
+            <g class="exec-node" data-exec-node="numerators">
+              <rect class="node-box available" x="610" y="475" width="150" height="110" rx="7"></rect>
+              <text class="node-kicker" x="627" y="500">WIDE RESULTS</text>
+              <text class="node-title" x="627" y="526">Numerators</text>
+              <text class="node-code" x="627" y="548">signed int16 x 2</text>
+              <text class="node-value" data-exec-value="numerators" x="627" y="572">[ -, - ]</text>
+            </g>
+
+            <g class="exec-node" data-exec-node="normalize">
+              <rect class="node-box available" x="1000" y="455" width="130" height="116" rx="7"></rect>
+              <text class="node-kicker" x="1015" y="480">FORMAT</text>
+              <text class="node-title" x="1015" y="506">LUT + round</text>
+              <text class="node-code" x="1015" y="528">LUT + round_q08()</text>
+              <text class="node-value" data-exec-value="normalize" x="1015" y="554">Q0.8 -&gt; int4</text>
+            </g>
+
+            <g class="exec-node" data-exec-node="result">
+              <rect class="node-box available" x="1000" y="300" width="130" height="116" rx="7"></rect>
+              <text class="node-kicker" x="1015" y="325">READBACK</text>
+              <text class="node-title" x="1015" y="351">Result bytes</text>
+              <text class="node-code" x="1015" y="373">result_mem[0:3]</text>
+              <text class="node-value" data-exec-value="result" x="1015" y="399">[ -- -- -- -- ]</text>
+            </g>
+
+          </svg>
+        </div>
+
+        <div class="row-loop" aria-label="Output row loop">
+          <span class="loop-label">Controller repeats this datapath for:</span>
+          <span data-exec-token="0"><small>token 0</small><strong>[0, 1]</strong></span>
+          <span data-exec-token="1"><small>token 1</small><strong>[0, 2]</strong></span>
+          <span data-exec-token="2"><small>token 2</small><strong>[0, 1]</strong></span>
+          <span data-exec-token="3"><small>token 3</small><strong>[0, 2]</strong></span>
+          <i class="loop-back" aria-hidden="true">NORMALIZE -&gt; next token -&gt; SCORE_ROW</i>
+        </div>
+
+        <div class="execution-readout">
+          <div class="readout-heading">
+            <p class="mini-label">Current phase</p>
+            <h3 data-exec-title>Host loads operands</h3>
+            <p data-exec-summary>Commands identify a destination; the following packed bytes fill its register region.</p>
+          </div>
+          <dl>
+            <div>
+              <dt>Controller does</dt>
+              <dd data-exec-control>Decode LOAD_X/LOAD_WQ/LOAD_WK/LOAD_WV, select a register region, and count payload bytes.</dd>
+            </div>
+            <div>
+              <dt>Data and arithmetic</dt>
+              <dd data-exec-data>No arithmetic yet. X uses 4 bytes; Wq, Wk, and Wv use 2 bytes each.</dd>
+            </div>
+            <div>
+              <dt>Example value</dt>
+              <dd><code data-exec-equation>X = [[1,0],[0,1],[1,1],[-1,1]]</code></dd>
+            </div>
+            <div>
+              <dt>Verilog fit</dt>
+              <dd data-exec-verilog><code>toy_attention_core.v</code> decodes the command and writes the selected packed register array.</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="execution-pseudocode">
+          <div class="pseudocode-heading">
+            <p class="mini-label">Pseudocode for selected phase</p>
+            <strong data-exec-pseudocode-state>LOAD</strong>
+          </div>
+          <pre><code data-exec-pseudocode aria-live="polite">for command in [LOAD_X, LOAD_WQ, LOAD_WK, LOAD_WV]:
+    destination = decode(command)
+    for byte in command.payload:
+        registers[destination].write(byte)  # keep packed
+return_to(COMMAND)</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="band">
+      <h2>Data Flow Versus Control Flow</h2>
+      <div class="concept-columns">
+        <section>
+          <p class="mini-label">Data path</p>
+          <h3>The machinery that holds and transforms numbers</h3>
+          <p>
+            Registers hold X, weights, Q/K/V, scores, and results. The MAC multiplies and adds.
+            Comparators find a maximum. The reciprocal LUT approximates division. Muxes choose
+            which value moves next.
+          </p>
+        </section>
+        <section>
+          <p class="mini-label">Control path</p>
+          <h3>The clock-by-clock conductor</h3>
+          <p>
+            The FSM remembers the current phase. Counters represent loop variables such as token,
+            output dimension, key index, and byte index. Control signals tell the data path when to
+            read, accumulate, clear, store, or emit a byte.
+          </p>
+        </section>
+      </div>
+
+      <div class="state-comparison">
+        <div>
+          <p class="mini-label">Implemented compute path</p>
+          <div class="state-flow target">
+            <span class="state-node is-built">COMMAND</span>
+            <span>-&gt;</span>
+            <span class="state-node is-built">PROJECT</span>
+            <span>-&gt;</span>
+            <span class="state-node is-built">SCORE</span>
+            <span>-&gt;</span>
+            <span class="state-node is-built">MAX</span>
+            <span>-&gt;</span>
+            <span class="state-node is-built">CLIP</span>
+            <span>-&gt;</span>
+            <span class="state-node is-built">WEIGHT</span>
+            <span>-&gt;</span>
+            <span class="state-node is-built">NORM</span>
+          </div>
+        </div>
+        <div>
+          <p class="mini-label">Implemented host-service path</p>
+          <div class="state-flow">
+            <span class="state-node is-built">COMMAND</span>
+            <span>-&gt;</span>
+            <span class="state-node is-built">LOAD or DEBUG</span>
+            <span>-&gt;</span>
+            <span class="state-node is-built">TX</span>
+            <span>-&gt;</span>
+            <span class="state-node is-built">COMMAND</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band">
+      <h2>Where The Verilog Fits</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Role In The Puzzle</th>
+            <th>Status</th>
+            <th>Next Use</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="../../../src/project.v"><code>project.v</code></a></td>
+            <td>Tiny Tapeout wrapper: maps byte data, handshakes, busy, and done to the fixed project pins.</td>
+            <td><span class="module-status built">Verified</span></td>
+            <td>Top module hardened into the 2x2 tile.</td>
+          </tr>
+          <tr>
+            <td><a href="../../../src/toy_attention_core.v"><code>toy_attention_core.v</code></a></td>
+            <td>Command decoder, packed storage, operand muxes, full attention data path, debug mux, and 10-state FSM.</td>
+            <td><span class="module-status built">Verified</span></td>
+            <td>Computes and serves the complete transaction.</td>
+          </tr>
+          <tr>
+            <td><a href="../../../src/dual_int4_mac.v"><code>dual_int4_mac.v</code></a></td>
+            <td>Two parallel signed-int4 multiply-accumulate lanes with signed int16 sums.</td>
+            <td><span class="module-status built">Verified</span></td>
+            <td>Both lanes project and weight dimensions together; lane 0 computes serialized scores.</td>
+          </tr>
+          <tr>
+            <td><a href="../../../TPU/toy_attention.py"><code>toy_attention.py</code></a></td>
+            <td>Exact integer golden model, packing rules, reciprocal LUT behavior, rounding, and reference traces.</td>
+            <td><span class="module-status built">18 tests pass</span></td>
+            <td>Generates authoritative vectors for RTL comparison.</td>
+          </tr>
+          <tr>
+            <td><a href="../../../TPU/sim/tb_toy_attention.v"><code>tb_toy_attention.v</code></a></td>
+            <td>Loads commands exactly like a host and compares results plus every debug class against Python.</td>
+            <td><span class="module-status built">Passes</span></td>
+            <td>Covers reference and signed/saturating stress transactions.</td>
+          </tr>
+          <tr>
+            <td><a href="../../../test/test.py"><code>test/test.py</code></a></td>
+            <td>Wrapper-level cocotb test for transactions, prerequisites, backpressure, errors, and FLUSH.</td>
+            <td><span class="module-status built">RTL + gate pass</span></td>
+            <td>The same checks run on source RTL and the powered routed netlist.</td>
+          </tr>
+          <tr>
+            <td><a href="../../../TPU/rtl/rtl/systolic_array.v"><code>rtl/rtl/*</code></a></td>
+            <td>Earlier exploratory controller, Q/K/V, matmul, and systolic-array modules.</td>
+            <td><span class="module-status broken">Legacy, excluded</span></td>
+            <td>Not listed in <code>info.yaml</code>; the historical systolic array still does not elaborate.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="tight-note">
+        The tapeout source list contains only <code>dual_int4_mac.v</code>,
+        <code>toy_attention_core.v</code>, and <code>project.v</code>. This keeps exploratory RTL from
+        accidentally entering synthesis.
+      </p>
+    </section>
+
+    <section class="band">
+      <h2>How It Runs End To End</h2>
+      <p>
+        The completed verification follows the same transaction a physical host will use: load bytes,
+        launch the chip, wait for <code>done</code>, read outputs, and compare them with the golden model.
+      </p>
+
+      <ol class="implementation-ladder">
+        <li>
+          <strong>1. Generate expected values</strong>
+          <span><code>toy_attention.py</code> computes exact int4 projections, B = 4 clipping, Q0.8 lookup values, signed rounding, packed bytes, and debug traces.</span>
+        </li>
+        <li>
+          <strong>2. Drive the byte protocol</strong>
+          <span>The test sends 10 packed payload bytes using <code>rx_valid/rx_ready</code>, including backpressure checks.</span>
+        </li>
+        <li>
+          <strong>3. Run the controller</strong>
+          <span><code>RUN_ATTENTION</code> executes PROJECT, SCORE, MAX, CLIP, WEIGHT, and NORM until all four output tokens are stored.</span>
+        </li>
+        <li>
+          <strong>4. Read results and debug state</strong>
+          <span>The host receives four result bytes and reads Q/K/V plus the retained final score, weight, denominator, numerator, and reciprocal values.</span>
+        </li>
+        <li>
+          <strong>5. Compare at two simulation levels</strong>
+          <span>The same wrapper transaction passes against source RTL and the powered post-layout gate netlist.</span>
+        </li>
+        <li>
+          <strong>6. Prove physical fit</strong>
+          <span>LibreLane hardening produces a routed 2x2 macro that meets 10 MHz, passes signoff checks, and passes Tiny Tapeout precheck.</span>
+        </li>
+        <li>
+          <strong>7. Preserve the exact contract</strong>
+          <span><code>toy_attention_spec.md</code>, <code>info.yaml</code>, and <code>config.json</code> keep arithmetic, pins, sources, tile count, and clock explicit.</span>
+        </li>
+      </ol>
+
+      <div class="run-surface">
+        <section>
+          <p class="mini-label">Model + RTL</p>
+          <h3>Run the complete local regression</h3>
+          <pre><code>cd TPU
+make verify</code></pre>
+          <p>Runs 18 Python tests, the historical PE check, and two full attention transactions.</p>
+        </section>
+        <section>
+          <p class="mini-label">Tiny Tapeout wrapper</p>
+          <h3>Run cocotb at the chip pins</h3>
+          <pre><code>cd test
+make
+make GATES=yes</code></pre>
+          <p>The gate-level command uses the generated powered netlist and Sky130 models.</p>
+        </section>
+      </div>
+    </section>
+
+    <section class="band">
+      <h2>What Remains Before Submission</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Priority</th>
+            <th>Remaining item</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Run the official cloud workflow on the exact submitted revision.</td>
+            <td>Local hardening and precheck pass, but the shuttle's CI result is the authoritative submission gate.</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Review maximum-slew warnings.</td>
+            <td>Timing, capacitance, DRC, LVS, antenna, and precheck pass; slow and typical corners still report non-fatal slew warnings.</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>Freeze a release commit and submit it to a shuttle.</td>
+            <td>The current worktree has a working generated bundle, but fabrication requires a pushed, immutable Git revision and a selected public Tiny Tapeout run.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="band" id="verified-result">
+      <h2>Verified End-to-End Result</h2>
+      <p>The reference transaction now completes at RTL and powered gate level:</p>
+      <ol>
+        <li>The host loads 10 packed payload bytes for X, Wq, Wk, and Wv.</li>
+        <li>The controller runs Q/K/V, all four attention rows, normalization, and result drain.</li>
+        <li>The host receives four packed result bytes representing the 4 x 2 int4 output.</li>
+        <li><code>READ_DEBUG</code> returns Q/K/V, scores, clipped weights, denominators, and numerators that match Python.</li>
+        <li>The complete top-level transaction reaches <code>done</code> without protocol violations.</li>
+        <li>The routed 2x2 macro uses 65.043% of its placement area and has 70.189609 ns worst setup slack at 10 MHz.</li>
+        <li>Tiny Tapeout precheck passes all 15 applicable checks.</li>
+      </ol>
+      <img src="../assets/toy-tpu-layout.png" alt="Routed 2x2 Tiny Tapeout layout for the toy attention TPU" style="display:block;width:100%;max-width:1000px;margin:24px auto 0;border:1px solid var(--line);border-radius:6px;">
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var root = document.querySelector("[data-execution-animation]");
+      if (!root) {
+        return;
+      }
+
+      var stages = [
+        {
+          state: "LOAD",
+          counters: "target=X/W, byte=0..9",
+          handshake: "busy=0, input accepted",
+          title: "Host loads operands",
+          summary: "Commands identify a destination; the following packed bytes fill its register region.",
+          control: "Decode LOAD_X/LOAD_WQ/LOAD_WK/LOAD_WV, select a register region, and count payload bytes.",
+          data: "No arithmetic yet. X uses 4 bytes; Wq, Wk, and Wv use 2 bytes each.",
+          equation: "X=[[1,0],[0,1],[1,1],[-1,1]]; Wq=Wk=I; Wv=diag(1,2)",
+          verilog: "<code>toy_attention_core.v</code> implements command decode, byte counts, load flags, packed storage, and protocol-error handling.",
+          pseudo: [
+            "for command in [LOAD_X, LOAD_WQ, LOAD_WK, LOAD_WV]:",
+            "    destination = decode(command)",
+            "    for byte in command.payload:",
+            "        registers[destination].write(byte)  # keep packed",
+            "return_to(COMMAND)"
+          ],
+          nodes: ["host", "io", "registers", "controller"],
+          dataEdges: ["host-in", "io-regs"],
+          controlEdges: ["ctrl-io", "ctrl-registers"],
+          tokens: ["pending", "pending", "pending", "pending"],
+          values: {
+            host: "send 10 bytes",
+            io: "LOAD_X / LOAD_W*",
+            io2: "store packed int4",
+            registers: "X, Wq, Wk, Wv",
+            registers2: "10 bytes loaded"
+          }
+        },
+        {
+          state: "PROJECT_QKV",
+          counters: "matrix=Q/K/V, token=0..3, d=0..1, k=0..1",
+          handshake: "busy=1, rx_ready=0",
+          title: "Project Q, K, and V",
+          summary: "The controller feeds one X element to two MAC lanes, so both output dimensions of a projection are accumulated together.",
+          control: "Clear both sums at k=0, select X and one weight row, advance k, then clamp and store both dimensions together.",
+          data: "X and Wq/Wk/Wv flow from packed registers into two MAC lanes. Q, K, and V each receive four packed result bytes.",
+          equation: "Q[0] = [1*1 + 0*0, 1*0 + 0*1] = [1,0]",
+          verilog: "<code>dual_int4_mac.v</code> supplies both lanes; <code>STATE_PROJECT</code> selects and stores Q, K, and V.",
+          pseudo: [
+            "for projection, weight in [(Q,Wq), (K,Wk), (V,Wv)]:",
+            "    for token in 0..3:",
+            "        mac0.clear(); mac1.clear()",
+            "        for k in 0..1:",
+            "            mac0.accumulate(X[token][k], weight[k][0])",
+            "            mac1.accumulate(X[token][k], weight[k][1])",
+            "        projection[token] = clamp_int4([mac0.sum, mac1.sum])"
+          ],
+          nodes: ["registers", "mac", "qkv", "controller"],
+          dataEdges: ["regs-mac", "mac-qkv"],
+          controlEdges: ["ctrl-registers", "ctrl-mac", "ctrl-qkv"],
+          tokens: ["pending", "pending", "pending", "pending"],
+          values: {
+            registers: "read X + Wq/Wk/Wv",
+            registers2: "two int4 operands",
+            mac: "lane0 -> dim0",
+            mac2: "lane1 -> dim1",
+            qkv: "Q=K=X; V ready"
+          }
+        },
+        {
+          state: "SCORE_ROW",
+          counters: "query=0, key=0..3, k=0..1",
+          handshake: "busy=1, mac_enable=1",
+          title: "Compute the score row for token 0",
+          summary: "Q[0] is held while K[0], K[1], K[2], and K[3] pass through MAC lane 0.",
+          control: "Clear the accumulator for each key, run two multiply-adds, store a score, and increment key_index.",
+          data: "Q and K flow from their registers into the MAC. Four signed int16 scores fill the row scratch registers.",
+          equation: "[1,0] dot K[0..3] = [1,0,1,-1]",
+          verilog: "<code>STATE_SCORE</code> drives lane 0 and writes four signed-int16 <code>score_mem</code> entries; lane 1 is idle in this phase.",
+          pseudo: [
+            "query = 0",
+            "for key in 0..3:",
+            "    mac.clear()",
+            "    for k in 0..1:",
+            "        mac.accumulate(Q[query][k], K[key][k])",
+            "    score[key] = mac.acc",
+            "# score = [1, 0, 1, -1]"
+          ],
+          nodes: ["qkv", "mac", "scores", "controller"],
+          dataEdges: ["qkv-mac", "mac-scores"],
+          controlEdges: ["ctrl-qkv", "ctrl-mac", "ctrl-scores"],
+          tokens: ["active", "pending", "pending", "pending"],
+          values: {
+            qkv: "Q0 + K[0..3]",
+            mac: "Q0[k] * K[j,k]",
+            mac2: "2 products / score",
+            scores: "[ 1, 0, 1, -1 ]"
+          }
+        },
+        {
+          state: "CLIP_ROW",
+          counters: "query=0, scan=MAX then WEIGHTS, j=0..3",
+          handshake: "busy=1, clip_write=1",
+          title: "Convert scores into simple attention weights",
+          summary: "The clip block first finds the row maximum, then gives nearby scores nonnegative weights without exponentials.",
+          control: "Scan four scores for max_score, scan again to produce u[j], and accumulate sum_u for normalization.",
+          data: "The score row enters comparator/add/subtract logic. The resulting u row and denominator are stored.",
+          equation: "max=1; u=max(0,4+score-max)=[4,3,4,2]; sum_u=13",
+          verilog: "<code>STATE_MAX</code> scans the row; <code>STATE_CLIP</code> writes four 3-bit weights and accumulates the 5-bit denominator.",
+          pseudo: [
+            "max_score = max(score[0..3])",
+            "sum_u = 0",
+            "for key in 0..3:",
+            "    u[key] = max(0, B + score[key] - max_score)  # B = 4",
+            "    sum_u += u[key]",
+            "# u = [4, 3, 4, 2], sum_u = 13"
+          ],
+          nodes: ["scores", "clip", "controller"],
+          dataEdges: ["scores-clip"],
+          controlEdges: ["ctrl-scores", "ctrl-clip"],
+          tokens: ["active", "pending", "pending", "pending"],
+          values: {
+            scores: "[ 1, 0, 1, -1 ]",
+            clip: "u=[4,3,4,2], sum=13"
+          }
+        },
+        {
+          state: "WEIGHTED_SUM",
+          counters: "query=0, d=0..1, value_token=0..3",
+          handshake: "busy=1, numerator_write=1",
+          title: "Use the weights to combine V",
+          summary: "Both MAC lanes are reused. Each weight multiplies both dimensions of V, producing two numerators in parallel.",
+          control: "Clear both lanes at value token 0, broadcast u[j], run four parallel multiply-add steps, and store both sums.",
+          data: "The clipped weight feeds both lanes while V dimension 0 and dimension 1 feed separate lane inputs.",
+          equation: "sum(u[j]*V[j]) = [6,18]",
+          verilog: "<code>STATE_WEIGHT</code> broadcasts each weight into both MAC lanes and stores <code>numerator0</code> and <code>numerator1</code>.",
+          pseudo: [
+            "mac0.clear(); mac1.clear()",
+            "for value_token in 0..3:",
+            "    mac0.accumulate(u[value_token], V[value_token][0])",
+            "    mac1.accumulate(u[value_token], V[value_token][1])",
+            "numerator = [mac0.sum, mac1.sum]",
+            "# numerator = [6, 18]"
+          ],
+          nodes: ["qkv", "clip", "mac", "numerators", "controller"],
+          dataEdges: ["qkv-mac", "clip-mac", "mac-numerators"],
+          controlEdges: ["ctrl-qkv", "ctrl-clip", "ctrl-mac", "ctrl-numerators"],
+          tokens: ["active", "pending", "pending", "pending"],
+          values: {
+            qkv: "V[0..3]",
+            clip: "u=[4,3,4,2], sum=13",
+            mac: "lane0 -> numerator0",
+            mac2: "lane1 -> numerator1",
+            numerators: "[ 6, 18 ]"
+          }
+        },
+        {
+          state: "NORMALIZE",
+          counters: "query=0, output_dim=0..1",
+          handshake: "busy=1, result_write=1",
+          title: "Normalize and store output token 0",
+          summary: "A reciprocal LUT approximates division by sum_u. Rounding and saturation return the wide numerators to int4.",
+          control: "Address reciprocal[13], multiply each numerator, round before shifting eight bits, clamp, and write the result register.",
+          data: "The numerator and denominator enter the normalizer. The completed two-value output token enters result storage.",
+          equation: "reciprocal[13]=20; round([6,18]*20/256)=[0,1]",
+          verilog: "<code>reciprocal_q08()</code>, <code>round_q08()</code>, and <code>clamp_int4()</code> implement the exact model rule in <code>STATE_NORM</code>.",
+          pseudo: [
+            "reciprocal = reciprocal_lut[sum_u]  # round(256 / 13) = 20",
+            "for output_dim in 0..1:",
+            "    scaled = numerator[output_dim] * reciprocal",
+            "    rounded = round_then_shift_right(scaled, 8)",
+            "    result[query][output_dim] = clamp(rounded, -8, 7)",
+            "# result[0] = [0, 1]"
+          ],
+          nodes: ["numerators", "normalize", "result", "controller"],
+          dataEdges: ["numerators-normalize", "normalize-result"],
+          controlEdges: ["ctrl-numerators", "ctrl-normalize", "ctrl-result"],
+          tokens: ["active", "pending", "pending", "pending"],
+          values: {
+            numerators: "[ 6, 18 ], sum=13",
+            normalize: "recip=20 -> [0,1]",
+            result: "[ 01 -- -- -- ]"
+          }
+        },
+        {
+          state: "SCORE_ROW .. NORMALIZE",
+          counters: "query=1..3; inner counters repeat",
+          handshake: "busy=1 until token 3 stored",
+          title: "Repeat the row loop for tokens 1 through 3",
+          summary: "No additional math hardware is needed. The controller changes indices and sends the same data path through four states again.",
+          control: "After each NORMALIZE, increment query_token. Return to SCORE_ROW until all four output tokens are stored.",
+          data: "Q/K/V remain on-chip. Score scratch, u scratch, and numerators are overwritten for each token; result bytes accumulate.",
+          equation: "outputs = [[0,1],[0,2],[0,1],[0,2]]",
+          verilog: "<code>STATE_NORM</code> increments <code>query_index</code> and returns to <code>STATE_SCORE</code> until token 3 is stored, then raises <code>done</code>.",
+          pseudo: [
+            "query = 1",
+            "while query < 4:",
+            "    state = SCORE_ROW;    compute_score_row(query)",
+            "    state = CLIP_ROW;     compute_clipped_weights()",
+            "    state = WEIGHTED_SUM; compute_weighted_v()",
+            "    state = NORMALIZE;    store_output_token(query)",
+            "    query += 1",
+            "state = COMMAND  # all four result rows are stored"
+          ],
+          nodes: ["qkv", "mac", "scores", "clip", "numerators", "normalize", "result", "controller"],
+          dataEdges: ["qkv-mac", "mac-scores", "scores-clip", "clip-mac", "mac-numerators", "numerators-normalize", "normalize-result"],
+          controlEdges: ["ctrl-qkv", "ctrl-mac", "ctrl-scores", "ctrl-clip", "ctrl-numerators", "ctrl-normalize", "ctrl-result"],
+          tokens: ["complete", "repeat", "repeat", "repeat"],
+          values: {
+            qkv: "reused for rows 1..3",
+            mac: "same two lanes, new row",
+            mac2: "score then weighted V",
+            scores: "row scratch reused",
+            clip: "u scratch reused",
+            numerators: "two values / row",
+            normalize: "three more tokens",
+            result: "[ 01 02 01 02 ]"
+          }
+        },
+        {
+          state: "TX -> COMMAND",
+          counters: "output_byte=0..3",
+          handshake: "tx_valid=1; done remains 1",
+          title: "Return four packed bytes to the host",
+          summary: "READ_RESULT selects result storage. One byte at a time crosses the same small I/O boundary back to the host.",
+          control: "Decode READ_RESULT, hold each selected byte until tx_ready, increment tx_index, and return to COMMAND.",
+          data: "Each output vector contains two int4 values and fits in one byte. With d0 in the high nibble for this illustration, the chip drains 01 02 01 02.",
+          equation: "illustrative pack {d0,d1}: [0,1] -> 0x01; [0,2] -> 0x02",
+          verilog: "<code>STATE_TX</code> holds <code>tx_data</code> stable under backpressure; <code>project.v</code> maps it to <code>uo_out</code>.",
+          pseudo: [
+            "on READ_RESULT:",
+            "    state = TX",
+            "    for token in 0..3:",
+            "        byte = pack_int4(result[token][0], result[token][1])",
+            "        hold(byte, tx_valid=1) until tx_ready",
+            "    state = COMMAND  # done stays high",
+            "# host receives: 0x01, 0x02, 0x01, 0x02"
+          ],
+          nodes: ["result", "io", "host", "controller"],
+          dataEdges: ["result-io", "host-out"],
+          controlEdges: ["ctrl-result", "ctrl-io"],
+          tokens: ["complete", "complete", "complete", "complete"],
+          values: {
+            host: "<- 01 02 01 02",
+            io: "READ_RESULT",
+            io2: "valid + byte stream",
+            result: "[ 01 02 01 02 ]"
+          }
+        }
+      ];
+
+      var defaults = {
+        host: "waiting",
+        io: "idle",
+        io2: "byte interface",
+        registers: "X, W, Q/K/V, scratch",
+        registers2: "small on-chip state",
+        mac: "idle",
+        mac2: "acc int16",
+        qkv: "not computed",
+        scores: "[ -, -, -, - ]",
+        clip: "u = [ -, -, -, - ]",
+        numerators: "[ -, - ]",
+        normalize: "Q0.8 -> int4",
+        result: "[ -- -- -- -- ]"
+      };
+
+      var index = 0;
+      var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var playing = !reducedMotion;
+      var timer = null;
+      var title = root.querySelector("[data-exec-title]");
+      var summary = root.querySelector("[data-exec-summary]");
+      var data = root.querySelector("[data-exec-data]");
+      var control = root.querySelector("[data-exec-control]");
+      var equation = root.querySelector("[data-exec-equation]");
+      var verilog = root.querySelector("[data-exec-verilog]");
+      var state = root.querySelector("[data-exec-state]");
+      var counters = root.querySelector("[data-exec-counters]");
+      var handshake = root.querySelector("[data-exec-handshake]");
+      var pseudocode = root.querySelector("[data-exec-pseudocode]");
+      var pseudocodeState = root.querySelector("[data-exec-pseudocode-state]");
+      var current = root.querySelector("[data-exec-current]");
+      var total = root.querySelector("[data-exec-total]");
+      var playButton = root.querySelector("[data-exec-play]");
+      var nodes = Array.prototype.slice.call(root.querySelectorAll("[data-exec-node]"));
+      var dataEdges = Array.prototype.slice.call(root.querySelectorAll("[data-data-edge]"));
+      var controlEdges = Array.prototype.slice.call(root.querySelectorAll("[data-control-edge]"));
+      var tokenNodes = Array.prototype.slice.call(root.querySelectorAll("[data-exec-token]"));
+      var stepButtons = Array.prototype.slice.call(root.querySelectorAll("[data-exec-step]"));
+
+      total.textContent = String(stages.length);
+
+      function render(nextIndex) {
+        index = (nextIndex + stages.length) % stages.length;
+        var stage = stages[index];
+        title.textContent = stage.title;
+        summary.textContent = stage.summary;
+        data.textContent = stage.data;
+        control.textContent = stage.control;
+        equation.textContent = stage.equation;
+        verilog.innerHTML = stage.verilog;
+        state.textContent = stage.state;
+        counters.textContent = stage.counters;
+        handshake.textContent = stage.handshake;
+        pseudocode.textContent = stage.pseudo.join("\n");
+        pseudocodeState.textContent = stage.state;
+        current.textContent = String(index + 1);
+
+        nodes.forEach(function (node) {
+          node.classList.toggle("is-active", stage.nodes.indexOf(node.getAttribute("data-exec-node")) !== -1);
+        });
+
+        dataEdges.forEach(function (edge) {
+          edge.classList.toggle("is-active", stage.dataEdges.indexOf(edge.getAttribute("data-data-edge")) !== -1);
+        });
+
+        controlEdges.forEach(function (edge) {
+          edge.classList.toggle("is-active", stage.controlEdges.indexOf(edge.getAttribute("data-control-edge")) !== -1);
+        });
+
+        Object.keys(defaults).forEach(function (key) {
+          var valueNode = root.querySelector("[data-exec-value='" + key + "']");
+          if (valueNode) {
+            valueNode.textContent = Object.prototype.hasOwnProperty.call(stage.values, key) ? stage.values[key] : defaults[key];
+          }
+        });
+
+        tokenNodes.forEach(function (tokenNode) {
+          var tokenIndex = Number(tokenNode.getAttribute("data-exec-token"));
+          tokenNode.classList.remove("is-active", "is-complete", "is-repeat");
+          if (stage.tokens[tokenIndex] === "active") {
+            tokenNode.classList.add("is-active");
+          } else if (stage.tokens[tokenIndex] === "complete") {
+            tokenNode.classList.add("is-complete");
+          } else if (stage.tokens[tokenIndex] === "repeat") {
+            tokenNode.classList.add("is-repeat");
+          }
+        });
+
+        stepButtons.forEach(function (button) {
+          var selected = Number(button.getAttribute("data-exec-step")) === index;
+          button.classList.toggle("is-active", selected);
+          button.setAttribute("aria-pressed", selected ? "true" : "false");
+        });
+      }
+
+      function updatePlayButton() {
+        playButton.textContent = playing ? "\u275A\u275A" : "\u25B6";
+        playButton.setAttribute("aria-label", playing ? "Pause animation" : "Play animation");
+        playButton.setAttribute("title", playing ? "Pause animation" : "Play animation");
+      }
+
+      function schedule() {
+        if (timer) {
+          window.clearInterval(timer);
+        }
+        timer = playing ? window.setInterval(function () {
+          render(index + 1);
+        }, 3800) : null;
+        updatePlayButton();
+      }
+
+      function pauseAndRender(nextIndex) {
+        playing = false;
+        render(nextIndex);
+        schedule();
+      }
+
+      root.addEventListener("click", function (event) {
+        var actionButton = event.target.closest("[data-exec-action]");
+        var stepButton = event.target.closest("[data-exec-step]");
+
+        if (actionButton) {
+          var action = actionButton.getAttribute("data-exec-action");
+          if (action === "play") {
+            playing = !playing;
+            schedule();
+          } else {
+            pauseAndRender(index + (action === "next" ? 1 : -1));
+          }
+        }
+
+        if (stepButton) {
+          pauseAndRender(Number(stepButton.getAttribute("data-exec-step")));
+        }
+      });
+
+      render(0);
+      schedule();
+    }());
+  </script>
+</body>
+</html>

@@ -1,110 +1,80 @@
-# TPU Matmul
+# Toy Attention TPU
 
-Small matrix multiplication software with:
+This repository now contains a complete fixed-shape attention accelerator for a
+Tiny Tapeout 2x2 tile. It computes one signed-int4, single-head attention pass
+over four 2D tokens. The controller deliberately reuses two MAC lanes over many
+cycles to keep the design understandable and small.
 
-- NumPy CPU fallback
-- JAX/XLA backend for CPU, GPU, or TPU
-- `float32`, `bfloat16`, and emulated quantized `int8` modes
-- CLI benchmarking with device sync
-
-## Install
-
-Local CPU development:
-
-```bash
-pip install -e .
-```
-
-Cloud TPU VM:
-
-```bash
-pip install -e ".[tpu]"
-```
-
-The TPU extra installs JAX's TPU package. On a TPU VM, JAX should expose devices whose
-platform is `tpu`.
-
-## Run
-
-List visible devices:
-
-```bash
-tpu-matmul --list-devices
-```
-
-CPU fallback:
-
-```bash
-tpu-matmul --backend numpy --dtype float32 --m 1024 --k 1024 --n 1024
-```
-
-JAX on whatever accelerator is available:
-
-```bash
-tpu-matmul --backend jax --device auto --dtype float32
-```
-
-TPU explicitly:
-
-```bash
-tpu-matmul --backend jax --device tpu --dtype bfloat16 --m 4096 --k 4096 --n 4096
-```
-
-Quantized int8 emulation:
-
-```bash
-tpu-matmul --backend jax --device tpu --dtype int8 --check-error
-```
-
-## API
-
-```python
-from tpu_matmul import matmul, random_matrices
-
-a, b = random_matrices(1024, 1024, 1024)
-result = matmul(a, b, backend="jax", device="tpu", dtype_mode="bfloat16")
-print(result.output, result.seconds, result.gops)
-```
-
-## Notes
-
-This uses JAX for TPU support rather than writing raw TPU kernels. That is the normal
-software stack: Python arrays are compiled by JAX/XLA and dispatched to the available
-device. For custom TPU kernels, the next layer down is JAX Pallas, where tiling,
-pipelining, and fused operations become explicit.
-
-## Verilog PE Simulation
-
-This repo also includes a single Processing Element (PE): a signed
-multiply-accumulate unit.
-
-Source files:
-
-- `rtl/pe.v`: parameterized PE hardware module
-- `sim/tb_pe.v`: Icarus Verilog testbench
-- `Makefile`: build/run helper
-
-Run the simulation:
-
-```bash
-make test-pe
-```
-
-Expected final output:
+## Fixed operation
 
 ```text
-PASS: PE multiply-accumulate simulation completed successfully.
+Q = clamp_int4(X * Wq)
+K = clamp_int4(X * Wk)
+V = clamp_int4(X * Wv)
+
+scores = Q * K^T
+u[j] = max(0, 4 + scores[j] - max(scores))
+output = clamp_int4(round((u * V) / sum(u)))
 ```
 
-On macOS, install Icarus Verilog with Homebrew:
+Division uses a `round(256 / sum(u))` Q0.8 reciprocal lookup table. Products
+are rounded to nearest with ties away from zero. See
+[`docs/toy_attention_spec.md`](docs/toy_attention_spec.md) for the exact
+arithmetic, byte protocol, debug selectors, and Tiny Tapeout pin map.
+
+## Current implementation
+
+| File | Role |
+| --- | --- |
+| `toy_attention.py` | Exact NumPy golden model and reference/stress cases |
+| `test_toy_attention.py` | Arithmetic, packing, saturation, and model tests |
+| `../src/dual_int4_mac.v` | Two signed-int4 multiply-accumulate lanes with int16 sums |
+| `../src/toy_attention_core.v` | Storage, command protocol, attention datapath, and controller FSM |
+| `../src/project.v` | Tiny Tapeout wrapper and pin mapping |
+| `sim/tb_toy_attention.v` | Icarus top-level transaction and debug-trace checker |
+| `../test/test.py` | Cocotb tests at the Tiny Tapeout wrapper boundary |
+| `../info.yaml` | Tiny Tapeout project metadata, source list, tile count, and pins |
+| `../src/config.json` | 10 MHz hardening configuration for a 2x2 tile |
+
+The files under `rtl/rtl/` are earlier exploratory implementations. They are
+not included in the Tiny Tapeout source list. In particular,
+`rtl/rtl/systolic_array.v` does not elaborate against the historical `pe.v`
+interface and is not part of the working chip.
+
+## Run the model and RTL regression
+
+Requirements are Python 3.10 or newer, Icarus Verilog, and GNU Make. On macOS:
 
 ```bash
 brew install icarus-verilog
+make setup
+make verify
 ```
 
-Check the install:
+`make verify` runs 18 Python tests, the historical standalone PE simulation,
+and two complete attention transactions generated from the Python model. The
+RTL checks final bytes and Q/K/V, score, clipped-weight, denominator,
+numerator, and reciprocal debug responses.
+
+Run the wrapper-level cocotb tests from the repository root:
 
 ```bash
-iverilog -V
-vvp -V
+cd ../test
+make
 ```
+
+## Tiny Tapeout result
+
+The current RTL has been hardened with LibreLane 3.0.3 and Sky130, then tested
+again against the powered post-layout netlist. The 2x2 design uses 65.043% of
+its placement area, meets the 10 MHz target with no setup or hold violations,
+passes Magic/KLayout DRC, LVS, antenna, and the full Tiny Tapeout precheck.
+
+Exact tool versions, timing, area, checks, and the remaining max-slew warning
+are recorded in [`docs/tapeout_verification.md`](docs/tapeout_verification.md).
+
+## Separate software experiment
+
+The `tpu_matmul/` package and its tests are a separate JAX/NumPy matrix
+multiplication experiment. They remain useful software examples but are not
+part of the Verilog chip or its Tiny Tapeout submission sources.

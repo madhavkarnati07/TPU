@@ -1,0 +1,30 @@
+# Local Python environment and generated metadata
+TPU/.venv/
+TPU/.pytest_cache/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Local Verilog simulation outputs
+TPU/.build/
+*.vvp
+*.vcd
+*.fst
+
+# Tiny Tapeout local hardening dependencies and products
+.tt-venv/
+.venv-tt/
+.tt-precheck-venv/
+.tt-precheck-bin/
+.tt-pdk/
+.cache/
+tt/
+runs/
+tt_submission/
+src/user_config.json
+src/config_merged.json
+test/sim_build/
+test/__pycache__/
+test/results.xml
+test/gate_level_netlist.v
+.DS_Store

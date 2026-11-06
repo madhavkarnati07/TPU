@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Requirements And Scope</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="section-header">
+    <a href="../index.html">Back to index</a>
+    <h1>Requirements And Scope</h1>
+    <p class="lede">A living requirements page for the educational toy transformer chip.</p>
+  </header>
+
+  <main>
+    <section class="band">
+      <h2>Primary Goal</h2>
+      <p>
+        Design a small chip that physically demonstrates the core arithmetic behind transformer
+        computation, especially matrix multiplication and self-attention, without trying to be fast,
+        dense, or useful for production inference.
+      </p>
+    </section>
+
+    <section class="band">
+      <h2>Hard Requirements</h2>
+      <ul>
+        <li>The project must remain educational and inspectable.</li>
+        <li>The first implementable target must fit a Tiny Tapeout-style digital design.</li>
+        <li>The design should be simulatable before any tapeout submission work.</li>
+        <li>The host may stream operands, control sequencing, and store most intermediate state.</li>
+        <li>The chip should expose a simple byte-oriented protocol that can be tested from Python.</li>
+        <li>Prefer int4 as an early candidate if it lets the toy problem size feel more transformer-like.</li>
+        <li>The fixed Phase 2 target is a simple serialized single-head attention pass with on-chip Q/K/V projection.</li>
+      </ul>
+    </section>
+
+    <section class="band">
+      <h2>Explicit Non-Goals</h2>
+      <ul>
+        <li>No standalone LLM or useful transformer inference on-chip.</li>
+        <li>No large on-chip SRAM requirement in the first design.</li>
+        <li>No exact softmax requirement; approximation, simplification, or host assistance are acceptable.</li>
+        <li>Avoid optimization-driven complexity unless it is needed for basic feasibility.</li>
+        <li>No RTL implementation until protocol, datapath schedule, numeric rounding, and verification plan are approved.</li>
+      </ul>
+    </section>
+
+    <section class="band">
+      <h2>Success Criteria</h2>
+      <div class="note-list">
+        <article class="note">
+          <span class="status">Draft</span>
+          <h3>Simulation success</h3>
+          <p>A Python golden model and RTL simulation agree on small int arithmetic examples.</p>
+        </article>
+        <article class="note">
+          <span class="status">Draft</span>
+          <h3>Concept success</h3>
+          <p>The chip can explainably compute at least one matrix or attention-like primitive.</p>
+        </article>
+        <article class="note">
+          <span class="status">Draft</span>
+          <h3>Tapeout readiness</h3>
+          <p>The final selected design can pass Tiny Tapeout hardening and gate-level simulation.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
